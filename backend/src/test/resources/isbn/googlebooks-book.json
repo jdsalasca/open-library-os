@@ -1,0 +1,44 @@
+{
+  "totalItems": 1,
+  "items": [
+    {
+      "id": "zyTCAlFPjgYC",
+      "volumeInfo": {
+        "title": "Neuromancer",
+        "subtitle": "El primer caso de la Saga de la Maquina de Turing",
+        "authors": [
+          "William Gibson"
+        ],
+        "publisher": "Ace",
+        "publishedDate": "1984-07-01",
+        "description": "Case, the cyborg who was the best nerve-dispatcher in the business.",
+        "industryIdentifiers": [
+          {
+            "type": "ISBN_13",
+            "identifier": "9780306406157"
+          }
+        ],
+        "pageCount": 271,
+        "categories": [
+          "Science fiction",
+          "Cyberpunk"
+        ],
+        "averageRating": 4,
+        "ratingsCount": 136,
+        "imageLinks": {
+          "smallThumbnail": "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=5",
+          "thumbnail": "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=1",
+          "small": "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=2",
+          "medium": "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=3",
+          "large": "https://books.google.com/books/content?id=zyTCAlFPjgYC&printsec=frontcover&img=1&zoom=4"
+        },
+        "language": "en",
+        "infoLink": "https://books.google.com/books?id=zyTCAlFPjgYC"
+      },
+      "accessInfo": {
+        "viewability": "PARTIAL",
+        "embeddable": true
+      }
+    }
+  ]
+}

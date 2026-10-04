@@ -17,8 +17,8 @@ import java.util.Optional;
 @Repository
 public class IsbnCache {
 
-    private final JdbcTemplate jdbc;
-    private final ObjectMapper json;
+    protected final JdbcTemplate jdbc;
+    protected final ObjectMapper json;
 
     public IsbnCache(JdbcTemplate jdbc, ObjectMapper json) {
         this.jdbc = jdbc;

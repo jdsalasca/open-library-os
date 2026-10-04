@@ -49,6 +49,15 @@ public record ExternalBook(
         public Mutable(String isbn, String title, String subtitle, List<String> authors,
                        String publisher, Integer publicationYear, List<String> categories,
                        String language, Integer pages, String summary, String coverUrl) {
+            this("openlibrary", isbn, title, subtitle, authors, publisher, publicationYear,
+                    categories, language, pages, summary, coverUrl);
+        }
+
+        /** Providers other than Open Library pass their own source tag. */
+        public Mutable(String source, String isbn, String title, String subtitle,
+                       List<String> authors, String publisher, Integer publicationYear,
+                       List<String> categories, String language, Integer pages,
+                       String summary, String coverUrl) {
             this.isbn = Isbn.parse(isbn) == null ? isbn : Isbn.parse(isbn).normalised();
             this.title = clean(title);
             this.subtitle = clean(subtitle);
@@ -60,7 +69,7 @@ public record ExternalBook(
             this.pages = pages;
             this.summary = clean(summary);
             this.coverUrl = clean(coverUrl);
-            this.source = "openlibrary";
+            this.source = clean(source);
         }
 
         public ExternalBook toRecord() {

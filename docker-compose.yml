@@ -14,6 +14,8 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD:-openlibrary}
       PGDATA: /var/lib/postgresql/data/pgdata
       TZ: ${TZ:-UTC}
+      # Optional: raises the Google Books quota. Works keyless without it.
+      ISBN_GOOGLE_BOOKS_KEY: ${ISBN_GOOGLE_BOOKS_KEY:-}
     # The DB is not published by default: the app is the only client that needs it,
     # and a published port is one more thing that can collide with the host.
     # To attach psql/DBeaver from outside, uncomment and pick a free port:
@@ -38,6 +40,8 @@ services:
       DB_USER: ${DB_USER:-openlibrary}
       DB_PASSWORD: ${DB_PASSWORD:-openlibrary}
       TZ: ${TZ:-UTC}
+      # Optional: raises the Google Books quota. Works keyless without it.
+      ISBN_GOOGLE_BOOKS_KEY: ${ISBN_GOOGLE_BOOKS_KEY:-}
     depends_on:
       db:
         condition: service_healthy
