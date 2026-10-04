@@ -1,0 +1,22 @@
+@use '../design/mixins' as *;
+
+.theme-toggle {
+  display: grid;
+  place-items: center;
+  width: 2.125rem;
+  height: 2.125rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+
+  @include focus-ring;
+
+  &:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+}

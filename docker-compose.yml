@@ -1,0 +1,78 @@
+name: open-library-os
+
+# One command brings the whole system up:  docker compose up -d
+# Everything the app needs lives in named volumes, so `down` keeps your data.
+# Only the web UI is published; Postgres is bound to localhost for admin tools.
+
+services:
+  db:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${DB_NAME:-openlibrary}
+      POSTGRES_USER: ${DB_USER:-openlibrary}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-openlibrary}
+      PGDATA: /var/lib/postgresql/data/pgdata
+      TZ: ${TZ:-UTC}
+    # The DB is not published by default: the app is the only client that needs it,
+    # and a published port is one more thing that can collide with the host.
+    # To attach psql/DBeaver from outside, uncomment and pick a free port:
+    # ports:
+    #   - "127.0.0.1:${DB_PORT:-5432}:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${DB_USER:-openlibrary} -d ${DB_NAME:-openlibrary}"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 20s
+    stop_grace_period: 30s
+
+  backend:
+    build:
+      context: ./backend
+    restart: unless-stopped
+    environment:
+      DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-openlibrary}
+      DB_USER: ${DB_USER:-openlibrary}
+      DB_PASSWORD: ${DB_PASSWORD:-openlibrary}
+      TZ: ${TZ:-UTC}
+    depends_on:
+      db:
+        condition: service_healthy
+    expose:
+      - "8080"
+    stop_grace_period: 20s
+
+  frontend:
+    build:
+      context: ./frontend
+    restart: unless-stopped
+    ports:
+      - "${HTTP_PORT:-8080}:8080"
+    depends_on:
+      backend:
+        condition: service_healthy
+
+  backup:
+    image: postgres:18-alpine
+    restart: unless-stopped
+    environment:
+      PGHOST: db
+      PGUSER: ${DB_USER:-openlibrary}
+      PGPASSWORD: ${DB_PASSWORD:-openlibrary}
+      PGDATABASE: ${DB_NAME:-openlibrary}
+      BACKUP_INTERVAL: ${BACKUP_INTERVAL:-86400}
+      KEEP_DAYS: ${KEEP_DAYS:-14}
+    volumes:
+      - backups:/backups
+      - ./deploy/backup.sh:/usr/local/bin/backup.sh:ro
+    entrypoint: ["/bin/sh", "/usr/local/bin/backup.sh"]
+    depends_on:
+      db:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  backups:

@@ -20,7 +20,10 @@ screenshot en las rondas de UI) y commit atómico. Ninguna ronda cierra solo con
 
 ---
 
-## Ronda 0 — Cimientos (repo, backend, frontend, Docker)
+## Ronda 0 — Cimientos (repo, backend, frontend, Docker) — `done`
+
+**Estado:** verificado el 2026-10-04. `mvn test` 3/3, `vitest run` 13/13, `tsc -b --noEmit` limpio,
+`oxlint` 0 avisos, 4 contenedores `healthy`, `down`/`up` sin pérdida de datos.
 
 **Objetivo:** un comando levanta un sistema vivo y verificable.
 
@@ -36,7 +39,8 @@ screenshot en las rondas de UI) y commit atómico. Ninguna ronda cierra solo con
 **Entregable:** `docker compose up -d` → SPA en `:8080`, `/api/actuator/health` = `UP`,
 migración aplicada. **Verificado** con `curl` + screenshot.
 
-**Criterio de cierre:** health verde tras `down -v` / `up`, sin estado perdido.
+**Criterio de cierre:** tras `docker compose down` + `up -d` los datos siguen intactos y el
+health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manual.)
 
 ---
 

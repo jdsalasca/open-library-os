@@ -1,0 +1,119 @@
+@use '../design/mixins' as *;
+
+.btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid transparent;
+  font-weight: var(--weight-medium);
+  line-height: 1;
+  white-space: nowrap;
+  text-decoration: none;
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease),
+    box-shadow var(--dur-fast) var(--ease),
+    transform var(--dur-fast) var(--ease);
+
+  @include focus-ring;
+
+  &:disabled,
+  &[aria-disabled='true'] {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+
+  &:active:not(:disabled) {
+    transform: translateY(1px);
+  }
+}
+
+// ── Sizes ───────────────────────────────────────────────────────────────────
+.btn--sm {
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+}
+
+.btn--md {
+  padding: var(--space-2) var(--space-4);
+  font-size: var(--text-base);
+}
+
+.btn--lg {
+  padding: var(--space-3) var(--space-6);
+  font-size: var(--text-md);
+}
+
+.btn--full {
+  width: 100%;
+}
+
+// ── Variants ────────────────────────────────────────────────────────────────
+.btn--primary {
+  background: var(--accent);
+  color: var(--text-inverted);
+
+  &:hover:not(:disabled) {
+    background: var(--accent-hover);
+  }
+
+  &:active:not(:disabled) {
+    background: var(--accent-active);
+  }
+}
+
+[data-theme='dark'] .btn--primary {
+  color: #10231e;
+}
+
+.btn--secondary {
+  background: var(--surface);
+  border-color: var(--border-strong);
+  color: var(--text);
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+    border-color: var(--text-subtle);
+  }
+}
+
+.btn--ghost {
+  background: transparent;
+  color: var(--text-muted);
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+}
+
+.btn--danger {
+  background: var(--danger);
+  color: var(--text-inverted);
+
+  &:hover:not(:disabled) {
+    background: var(--danger-hover);
+  }
+}
+
+[data-theme='dark'] .btn--danger {
+  color: #2a1210;
+}
+
+.btn__spinner {
+  width: 0.85em;
+  height: 0.85em;
+  border-radius: 50%;
+  border: 2px solid currentColor;
+  border-top-color: transparent;
+  animation: btn-spin 640ms linear infinite;
+}
+
+@keyframes btn-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}

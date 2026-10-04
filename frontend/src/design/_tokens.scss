@@ -1,0 +1,162 @@
+// ---------------------------------------------------------------------------
+// Design tokens — single source of truth for the whole UI.
+// Colours are CSS custom properties so the theme flips at runtime; everything
+// else is a plain custom property too, consumed by mixins and components.
+// ─────────────────────────────────────────────────────────────────────────────
+
+// Breakpoints (kept in SCSS: media queries cannot read custom properties).
+$bp-sm: 40rem; //  640px
+$bp-md: 48rem; //  768px
+$bp-lg: 64rem; // 1024px
+$bp-xl: 80rem; // 1280px
+
+$font-sans: ui-sans-serif, system-ui, -apple-system, 'Segoe UI', Roboto,
+  'Helvetica Neue', Arial, sans-serif;
+$font-serif: 'Iowan Old Style', 'Palatino Linotype', Palatino, 'Book Antiqua',
+  Georgia, 'Times New Roman', serif;
+$font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas,
+  monospace;
+
+:root {
+  // ── Typography ──────────────────────────────────────────────────────────
+  --font-sans: #{$font-sans};
+  --font-serif: #{$font-serif};
+  --font-mono: #{$font-mono};
+
+  --text-xs: 0.75rem;
+  --text-sm: 0.8125rem;
+  --text-base: 0.9375rem;
+  --text-md: 1.0625rem;
+  --text-lg: 1.25rem;
+  --text-xl: 1.5rem;
+  --text-2xl: 1.9375rem;
+  --text-3xl: 2.5rem;
+
+  --leading-tight: 1.2;
+  --leading-snug: 1.35;
+  --leading-normal: 1.55;
+
+  --tracking-tight: -0.012em;
+  --tracking-normal: 0;
+  --tracking-wide: 0.06em;
+
+  --weight-regular: 400;
+  --weight-medium: 500;
+  --weight-semibold: 600;
+  --weight-bold: 700;
+
+  // ── Space (4px base rhythm) ─────────────────────────────────────────────
+  --space-0: 0;
+  --space-1: 0.25rem;
+  --space-2: 0.5rem;
+  --space-3: 0.75rem;
+  --space-4: 1rem;
+  --space-5: 1.25rem;
+  --space-6: 1.5rem;
+  --space-8: 2rem;
+  --space-10: 2.5rem;
+  --space-12: 3rem;
+  --space-16: 4rem;
+  --space-20: 5rem;
+
+  // ── Radius ──────────────────────────────────────────────────────────────
+  --radius-sm: 4px;
+  --radius-md: 8px;
+  --radius-lg: 14px;
+  --radius-pill: 999px;
+
+  // ── Motion ──────────────────────────────────────────────────────────────
+  --dur-fast: 120ms;
+  --dur-base: 200ms;
+  --dur-slow: 320ms;
+  --ease: cubic-bezier(0.2, 0, 0.2, 1);
+  --ease-out: cubic-bezier(0, 0, 0.2, 1);
+
+  // ── Layout ──────────────────────────────────────────────────────────────
+  --topbar-height: 3.5rem;
+  --sidebar-width: 15rem;
+  --content-max: 76rem;
+
+  // ── Palette: light ──────────────────────────────────────────────────────
+  color-scheme: light;
+
+  --bg: #faf8f4;
+  --bg-sunken: #f2efe8;
+  --surface: #ffffff;
+  --surface-raised: #ffffff;
+  --surface-hover: #f7f5f0;
+
+  --border: #e5e0d6;
+  --border-strong: #d2ccbe;
+
+  --text: #1c1a17;
+  --text-muted: #6b665d;
+  --text-subtle: #8f8a80;
+  --text-inverted: #ffffff;
+
+  --accent: #1f6f5c;
+  --accent-hover: #195a4a;
+  --accent-active: #124538;
+  --accent-soft: #e6f1ed;
+  --accent-border: #b9d8cd;
+  --accent-text: #1a5b4b;
+
+  --success: #2c7a4b;
+  --success-soft: #e6f4ec;
+  --warning: #a8690b;
+  --warning-soft: #fbf0dc;
+  --danger: #b4342a;
+  --danger-hover: #9a2b22;
+  --danger-soft: #fbeae8;
+  --info: #2a63a8;
+  --info-soft: #e8f0fb;
+
+  --shadow-sm: 0 1px 2px rgb(28 26 23 / 0.06);
+  --shadow-md: 0 2px 4px rgb(28 26 23 / 0.05), 0 6px 16px rgb(28 26 23 / 0.07);
+  --shadow-lg: 0 8px 24px rgb(28 26 23 / 0.1), 0 2px 6px rgb(28 26 23 / 0.06);
+  --shadow-focus: 0 0 0 3px rgb(31 111 92 / 0.28);
+
+  --overlay: rgb(28 26 23 / 0.42);
+}
+
+[data-theme='dark'] {
+  color-scheme: dark;
+
+  --bg: #131311;
+  --bg-sunken: #0e0e0d;
+  --surface: #1c1b18;
+  --surface-raised: #232220;
+  --surface-hover: #292723;
+
+  --border: #302e29;
+  --border-strong: #423f38;
+
+  --text: #f2efe8;
+  --text-muted: #a49e93;
+  --text-subtle: #7d776d;
+  --text-inverted: #131311;
+
+  --accent: #4fbf9e;
+  --accent-hover: #66d0b1;
+  --accent-active: #86e0c6;
+  --accent-soft: #14312a;
+  --accent-border: #235246;
+  --accent-text: #7bd6ba;
+
+  --success: #58c58b;
+  --success-soft: #14301f;
+  --warning: #dfa53f;
+  --warning-soft: #33260f;
+  --danger: #e8776b;
+  --danger-hover: #f09287;
+  --danger-soft: #35191a;
+  --info: #7aa8e8;
+  --info-soft: #16233a;
+
+  --shadow-sm: 0 1px 2px rgb(0 0 0 / 0.4);
+  --shadow-md: 0 2px 4px rgb(0 0 0 / 0.35), 0 8px 20px rgb(0 0 0 / 0.45);
+  --shadow-lg: 0 10px 30px rgb(0 0 0 / 0.55), 0 2px 8px rgb(0 0 0 / 0.4);
+  --shadow-focus: 0 0 0 3px rgb(79 191 158 / 0.32);
+
+  --overlay: rgb(0 0 0 / 0.6);
+}

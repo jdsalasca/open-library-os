@@ -1,0 +1,75 @@
+@use '../design/mixins' as *;
+
+.state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: var(--space-3);
+  padding: var(--space-12) var(--space-6);
+  text-align: center;
+}
+
+.state__icon {
+  display: grid;
+  place-items: center;
+  width: 2.75rem;
+  height: 2.75rem;
+  border-radius: var(--radius-pill);
+  background: var(--bg-sunken);
+  border: 1px solid var(--border);
+  color: var(--text-subtle);
+}
+
+.state--error .state__icon {
+  background: var(--danger-soft);
+  border-color: transparent;
+  color: var(--danger);
+}
+
+.state__title {
+  font-size: var(--text-md);
+  font-weight: var(--weight-semibold);
+}
+
+.state__description {
+  max-width: 42ch;
+  color: var(--text-muted);
+}
+
+.state__skeletons {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  width: 100%;
+  max-width: 28rem;
+}
+
+.skeleton {
+  display: block;
+  background: linear-gradient(
+    90deg,
+    var(--bg-sunken) 25%,
+    var(--surface-hover) 37%,
+    var(--bg-sunken) 63%
+  );
+  background-size: 400% 100%;
+  animation: skeleton-sweep 1.4s ease-in-out infinite;
+
+  @include reduced-motion {
+    animation: none;
+  }
+}
+
+@keyframes skeleton-sweep {
+  0% {
+    background-position: 100% 50%;
+  }
+
+  100% {
+    background-position: 0 50%;
+  }
+}
+
+.visually-hidden {
+  @include visually-hidden;
+}
