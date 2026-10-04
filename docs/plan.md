@@ -117,16 +117,18 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ## Ronda 5 — Rellenado automático por ISBN
 
-**Estado:** dominio hecho (2026-10-04), 20 tests verdes: `Isbn` (checksum y
-normalización ISBN-10/13) y `ExternalBook` (modelo común para los proveedores).
-Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
-Falta: proveedores HTTP, caché `isbn_cache` y el botón en el formulario de libro.
+**Estado:** dominio y primer proveedor hechos (2026-10-04), **31 tests verdes**: `Isbn`
+(checksum y normalización ISBN-10/13), `ExternalBook` (modelo común) y `OpenLibraryProvider`
+(real, sin API key). Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
+Falta: caché `isbn_cache`, Google Books, endpoint REST y el botón en el formulario.
 
 **Objetivo:** escribir 13 dígitos y obtener la ficha completa.
 
 - Migración `V6`: `isbn_cache`.
-- Proveedores: Open Library (sin key), Google Books (opcional), ambos normalizados a un modelo
-  común `ExternalBook`. Caché en BD; timeout y circuit-breaker; si todo falla → formulario manual.
+- Proveedores: Open Library (sin key, **hecho**), Google Books (opcional), ambos normalizados a
+  un modelo común `ExternalBook`. Caché en BD; timeout y circuit-breaker; si todo falla →
+  formulario manual. `OpenLibraryProvider` ya degrada a vacío sin propagar errores: una
+  biblioteca sin internet debe poder dar de alta un libro a mano.
 - Frontend: en el formulario de libro, botón "Buscar por ISBN" con preview antes de aplicar,
   indicador de origen de cada campo.
 - Tests: checksum ISBN-10/13, parseo de respuestas con fixtures, fallback manual, caché.
