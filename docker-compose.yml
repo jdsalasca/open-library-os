@@ -72,6 +72,14 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    # The marker is (re)written only after a dump that passed `pg_restore --list`,
+    # so "healthy" means "there is a restore point that is known to be readable".
+    healthcheck:
+      test: ["CMD-SHELL", "test -f /backups/.last-ok"]
+      interval: 5m
+      timeout: 5s
+      retries: 3
+      start_period: 2m
 
 volumes:
   pgdata:

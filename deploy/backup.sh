@@ -18,6 +18,9 @@ dump_once() {
         # A dump that cannot be listed cannot be restored; drop it and retry next tick.
         if pg_restore --list "$target" >/dev/null 2>&1; then
             echo "backup ok: $target"
+            # Freshness marker: the compose healthcheck asserts on this, so "backups
+            # are running" is observable from `docker compose ps` and not a guess.
+            date -u +%s > "$DEST/.last-ok"
         else
             echo "backup corrupt, discarding: $target" >&2
             rm -f "$target"
