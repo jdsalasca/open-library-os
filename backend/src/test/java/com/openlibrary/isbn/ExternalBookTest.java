@@ -79,4 +79,17 @@ class ExternalBookTest {
         assertThat(record.source()).isEqualTo("openlibrary");
         assertThat(record.isbn()).isEqualTo("9780306406157");
     }
+
+    @Test
+    void acceptsTheSourceOfAnyProvider() {
+        var record = new ExternalBook.Mutable(
+                "googlebooks", "9780306406157", "Neuromancer", null,
+                List.of("William Gibson"), "Ace", 1984, List.of(), "en", 271, null, null)
+                .toRecord();
+
+        assertThat(record.source()).isEqualTo("googlebooks");
+        // Cleanup still applies when the source is explicit.
+        assertThat(record.title()).isEqualTo("Neuromancer");
+        assertThat(record.authors()).containsExactly("William Gibson");
+    }
 }

@@ -26,7 +26,7 @@ import java.util.Optional;
  * this runs on a request thread; add a cache and Google Books when there is a second
  * caller that needs them.
  */
-public class OpenLibraryProvider {
+public class OpenLibraryProvider implements IsbnProvider {
 
     private static final Logger log = LoggerFactory.getLogger(OpenLibraryProvider.class);
 
@@ -38,7 +38,13 @@ public class OpenLibraryProvider {
         this.http = http;
     }
 
+    @Override
+    public String name() {
+        return "openlibrary";
+    }
+
     /** Never throws: an unreachable or unhappy provider is simply "no data". */
+    @Override
     public Optional<ExternalBook> lookup(Isbn isbn) {
         if (isbn == null) {
             // A failed checksum must not reach the network.
