@@ -1,0 +1,13 @@
+=== backend: mvn test ===
+[INFO] Building open-library-os 0.1.0-SNAPSHOT
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 92.38 s -- in com.openlibrary.auth.AuthApiTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 48.50 s -- in com.openlibrary.auth.PermissionMatrixTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.378 s -- in com.openlibrary.auth.RoleTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.465 s -- in com.openlibrary.BaselineTest
+[INFO] Tests run: 4, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.018 s -- in com.openlibrary.isbn.ExternalBookTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 21.07 s -- in com.openlibrary.isbn.IsbnLookupApiTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.225 s -- in com.openlibrary.isbn.IsbnTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 7.121 s -- in com.openlibrary.isbn.OpenLibraryProviderTest
+[INFO] Tests run: 81, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS

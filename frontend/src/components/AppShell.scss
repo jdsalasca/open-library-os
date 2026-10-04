@@ -120,11 +120,67 @@
   }
 }
 
+.shell__logout {
+  padding: var(--space-2) var(--space-3);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+
+  @include focus-ring;
+
+  &:hover {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+}
+
+.shell__user {
+  display: none;
+  max-width: 12rem;
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  @include from(t.$bp-md) {
+    display: block;
+  }
+}
+
+.shell__backdrop {
+  display: none;
+  position: fixed;
+  inset: var(--topbar-height) 0 0;
+  z-index: 24;
+  background: var(--overlay);
+  animation: backdrop-in var(--dur-base) var(--ease-out);
+
+  @include below(t.$bp-lg) {
+    display: block;
+  }
+
+  @include focus-ring(-2px);
+}
+
+@keyframes backdrop-in {
+  from {
+    opacity: 0;
+  }
+}
+
 // ── Body ────────────────────────────────────────────────────────────────────
 .shell__body {
   display: flex;
   flex: 1;
   min-height: 0;
+}
+
+.shell__nav:empty {
+  display: none;
 }
 
 .shell__nav {

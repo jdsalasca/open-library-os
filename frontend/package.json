@@ -10,7 +10,8 @@
     "preview": "vite preview",
     "test": "vitest run",
     "test:watch": "vitest",
-    "typecheck": "tsc -b --noEmit"
+    "typecheck": "tsc -b --noEmit",
+    "qa:auth": "node scripts/reset-admin.mjs && node scripts/screenshot-auth.mjs"
   },
   "dependencies": {
     "@tanstack/react-query": "^5.104.1",

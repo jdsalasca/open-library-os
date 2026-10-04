@@ -1,4 +1,5 @@
 import { Icon } from './Icon';
+import './ThemeToggle.scss';
 
 export function ThemeToggle({
   isDark,

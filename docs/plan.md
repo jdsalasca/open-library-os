@@ -50,7 +50,25 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ---
 
-## Ronda 1 — Auth y roles
+## Ronda 1 — Auth y roles — `done`
+
+**Estado:** verificado el 2026-10-04. Backend 47/47 (auth+matriz de permisos), frontend 20/20,
+`tsc` limpio, `oxlint` 0 avisos. Capturas en `docs/screenshots/r1-*`, salida real en
+`docs/evidence/round-1/`.
+
+**Decisiones tomadas al implementarla (importan para el resto de rondas):**
+
+- La autorización vive **en `SecurityConfig`, por URL**, no en `@PreAuthorize`. Una anotación de
+  método sólo se evalúa cuando hay un handler, así que un endpoint nuevo quedaba accesible por
+  descuido. Con reglas de URL la matriz de roles puede probarse desde la ronda 1, aunque el
+  módulo aún no exista.
+- El cliente envía el token **crudo** de la cookie `XSRF-TOKEN`; hace falta desactivar el
+  enmascarado BREACH (`CsrfTokenRequestAttributeHandler` con atributo `null`), porque el handler
+  por defecto rechaza el valor que él mismo acaba de publicar.
+- La matriz de permisos usa una **cuenta desechable** para los cambios de rol: usar una cuenta de
+  rol la degradaba y falseaba todas las comprobaciones posteriores.
+- El paquete `isbn` (ronda 5) avanza en paralelo sobre el mismo árbol. Este commit toca solo los
+  ficheros de la ronda 1.
 
 **Objetivo:** cuatro roles con permisos reales, sesión persistente en BD.
 

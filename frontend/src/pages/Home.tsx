@@ -1,10 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { Badge, Card, CardBody, CardHeader, PageHead, Skeleton } from '../components';
 import { getHealth } from '../api/system';
+import { useAuth } from '../auth/auth-context';
 import './Home.scss';
 
 const ROADMAP = [
-  { round: '1', title: 'Auth y roles', detail: 'Lector, administrativo, bibliotecario y administrador.' },
   { round: '2', title: 'Catalogo', detail: 'Libros, autores multiples, editoriales y categorias.' },
   { round: '3', title: 'Inventario', detail: 'Ejemplares con codigo de barras y ubicacion fisica.' },
   { round: '4', title: 'Prestamos', detail: 'Alta, devolucion, renovacion y reservas.' },
@@ -12,7 +12,9 @@ const ROADMAP = [
   { round: '6', title: 'Mapa 3D', detail: 'Donde esta cada ejemplar, desde el movil.' },
 ];
 
-export function Home({ libraryName }: { libraryName: string }) {
+export function Home() {
+  const { user } = useAuth();
+
   const health = useQuery({
     queryKey: ['health'],
     queryFn: ({ signal }) => getHealth(signal),
@@ -24,10 +26,14 @@ export function Home({ libraryName }: { libraryName: string }) {
   return (
     <div className="home">
       <PageHead
-        eyebrow="Instalacion completa"
-        title={libraryName}
-        lead="Gestiona tu catalogo, inventario y prestamos. Tus datos viven en tu servidor: exportalos, importalos y respaldalos cuando quieras."
-        actions={<Badge tone={up ? 'success' : 'warning'} dot>{statusLabel(health)}</Badge>}
+        eyebrow={`Sesion de ${user?.fullName ?? ''}`}
+        title="Tu biblioteca, en marcha"
+        lead="Todo el estado vive en tu servidor Postgres: reinicia los contenedores cuando quieras y los datos seguiran ahi."
+        actions={
+          <Badge tone={up ? 'success' : 'warning'} dot>
+            {health.isPending ? 'Comprobando' : health.isError ? 'API inaccesible' : 'Servicios activos'}
+          </Badge>
+        }
       />
 
       <div className="home__grid">
@@ -39,7 +45,7 @@ export function Home({ libraryName }: { libraryName: string }) {
               health.isError ? (
                 <Badge tone="danger">Sin conexion</Badge>
               ) : (
-                <Badge tone={up ? 'success' : 'warning'}>{health.data?.status ?? '…'}</Badge>
+                <Badge tone={up ? 'success' : 'warning'}>{health.data?.status ?? '...'}</Badge>
               )
             }
           />
@@ -48,7 +54,13 @@ export function Home({ libraryName }: { libraryName: string }) {
               <div>
                 <dt>API</dt>
                 <dd>
-                  {health.isPending ? <Skeleton width="6rem" /> : health.isError ? 'Inaccesible' : 'Operativa'}
+                  {health.isPending ? (
+                    <Skeleton width="6rem" />
+                  ) : health.isError ? (
+                    'Inaccesible'
+                  ) : (
+                    'Operativa'
+                  )}
                 </dd>
               </div>
               <div>
@@ -71,8 +83,8 @@ export function Home({ libraryName }: { libraryName: string }) {
               </div>
             </dl>
             <p className="home__note">
-              Reiniciar los contenedores no pierde datos: todo el estado vive en Postgres, sobre un
-              volumen con respaldo automatico.
+              Tu sesion se guarda en Postgres, no en memoria: puedes reiniciar el backend sin perder
+              el acceso.
             </p>
           </CardBody>
         </Card>
@@ -96,10 +108,4 @@ export function Home({ libraryName }: { libraryName: string }) {
       </div>
     </div>
   );
-}
-
-function statusLabel(health: { isPending: boolean; isError: boolean }) {
-  if (health.isPending) return 'Comprobando';
-  if (health.isError) return 'API inaccesible';
-  return 'Todos los servicios activos';
 }

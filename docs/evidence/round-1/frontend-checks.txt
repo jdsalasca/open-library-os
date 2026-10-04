@@ -1,0 +1,8 @@
+=== frontend: tsc --noEmit ===
+
+(sin salida = sin errores de tipos)
+=== frontend: oxlint ===
+=== frontend: vitest run ===
+[2m Test Files [22m [1m[32m4 passed[39m[22m[90m (4)[39m
+[2m      Tests [22m [1m[32m20 passed[39m[22m[90m (20)[39m
+[2m   Duration [22m 4.16s[2m (environment 43%, tests 27%, transform 13%, import 10%, setup 7%)[22m
