@@ -60,8 +60,15 @@ class IsbnProviderConfig {
     IsbnProviderChain isbnProviderChain(IsbnCache cache,
                                        OpenLibraryProvider openLibrary,
                                        GoogleBooksProvider googleBooks) {
-        return new IsbnProviderChain(cache, List.of(openLibrary, googleBooks));
+        // After a few unreachable answers the provider is skipped for a few minutes, so a
+        // librarian behind a dead link is not charged one timeout per ISBN they type.
+        var breaker = new CircuitBreaker(
+                FAILURE_THRESHOLD, Duration.ofMinutes(2), System::currentTimeMillis);
+        return new IsbnProviderChain(cache, List.of(openLibrary, googleBooks), breaker);
     }
+
+    /** Consecutive provider faults before the circuit opens. */
+    static final int FAILURE_THRESHOLD = 3;
 
     private static RestClient restClient(String baseUrl) {
         var requestFactory = new JdkClientHttpRequestFactory(
