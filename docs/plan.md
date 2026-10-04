@@ -135,20 +135,25 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ## Ronda 5 — Rellenado automático por ISBN
 
-**Estado:** backend completo (2026-10-04), **36 tests verdes**: `Isbn` (checksum y
-normalización ISBN-10/13), `ExternalBook` (modelo común), `OpenLibraryProvider` (real,
-sin API key, con WireMock) y `GET /api/isbn/{isbn}` con caché en Postgres (`V6`).
+**Estado:** backend completo (2026-10-04), **97 tests verdes**: `Isbn` (checksum y
+normalización ISBN-10/13), `ExternalBook` (modelo común), `OpenLibraryProvider` y
+`GoogleBooksProvider` (ambos con WireMock, sin salir a internet), `IsbnProviderChain`
+(fallback entre proveedores) y `GET /api/isbn/{isbn}` con caché en Postgres (`V6`).
 Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
-Falta: Google Books, circuit-breaker y el botón en el formulario de libro.
+Falta: circuit-breaker y el botón "Buscar por ISBN" en el formulario de libro (ronda 2).
 
 **Objetivo:** escribir 13 dígitos y obtener la ficha completa.
 
 - Migración `V6`: `isbn_cache` — **hecha**. Guarda también los fallos: sin eso, quien teclea
   un ISBN desconocido golpearía la API externa en cada intento.
-- Proveedores: Open Library (sin key, **hecho**), Google Books (opcional), ambos normalizados a
-  un modelo común `ExternalBook`. Caché en BD; timeout de 5 s ya configurado; si todo falla →
-  formulario manual. `OpenLibraryProvider` degrada a vacío sin propagar errores: una
-  biblioteca sin internet debe poder dar de alta un libro a mano.
+- Proveedores: Open Library (sin key, **hecho**) y Google Books (opcional, **hecho**), ambos
+  normalizados al modelo común `ExternalBook`. `IsbnProviderChain` los consulta en orden
+  (Open Library primero, porque no necesita clave) y guarda en la caché qué proveedor
+  respondió, para que la UI pueda indicar el origen de cada campo. Timeout de 5 s en ambos.
+  Ambos degradan a vacío ante cualquier fallo —incluido el 429 de cuota de Google Books—
+  sin propagar errores: una biblioteca sin internet, o sin cuota, debe poder dar de alta
+  un libro a mano. Google Books **funciona sin API key**; `ISBN_GOOGLE_BOOKS_KEY` solo sube
+  la cuota diaria, así que no hay que registrarse para usar el relleno automático.
   El endpoint responde 400 con `code: invalid_isbn` si el checksum no cuadra y 404 si nadie
   conoce el ISBN, para que la UI ofrezca el formulario manual en ambos casos.
 - Frontend: en el formulario de libro, botón "Buscar por ISBN" con preview antes de aplicar,
