@@ -1,0 +1,18 @@
+
+> frontend@0.0.0 test
+> vitest run
+
+
+[1m[30m[46m RUN [49m[39m[22m [36mv5.0.3 [39m[90mC:/Users/jdsal/Documents/Programming-personal/open-library-os/frontend[39m
+
+ [32mÔ£ô[39m src/test/api-client.test.ts [2m([22m[2m4 tests[22m[2m)[22m[32m 23[2mms[22m[39m
+ [32mÔ£ô[39m src/test/use-theme.test.ts [2m([22m[2m2 tests[22m[2m)[22m[32m 37[2mms[22m[39m
+ [32mÔ£ô[39m src/test/design-system.test.tsx [2m([22m[2m7 tests[22m[2m)[22m[33m 934[2mms[22m[39m
+   [32mÔ£ô[39m Button [2m(3)[22m
+     [33m[2mÔ£ô[22m[39m exposes an accessible name and fires the handler[33m 589[2mms[22m[39m
+
+[2m Test Files [22m [1m[32m3 passed[39m[22m[90m (3)[39m
+[2m      Tests [22m [1m[32m13 passed[39m[22m[90m (13)[39m
+[2m   Start at [22m 12:42:22
+[2m   Duration [22m 39.17s[2m (environment 77%, setup 13%, import 4%, transform 4%, tests 1%)[22m
+

@@ -25,6 +25,12 @@ screenshot en las rondas de UI) y commit atómico. Ninguna ronda cierra solo con
 **Estado:** verificado el 2026-10-04. `mvn test` 3/3, `vitest run` 13/13, `tsc -b --noEmit` limpio,
 `oxlint` 0 avisos, 4 contenedores `healthy`, `down`/`up` sin pérdida de datos.
 
+**Añadido tras el cierre:** `scripts/verify-restore.sh` demuestra que un backup se
+restaura de verdad (dump → restore → comparación de filas en las 6 tablas) y lo
+limpia aunque falle. Sin desbordamiento horizontal a 320/390/768/1440 px.
+Evidencia en [`docs/evidence/round-0/`](evidence/round-0/) y capturas en
+[`docs/screenshots/`](screenshots/).
+
 **Objetivo:** un comando levanta un sistema vivo y verificable.
 
 - Monorepo `backend/` + `frontend/` + `deploy/`, git en `develop`.

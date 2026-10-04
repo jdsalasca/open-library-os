@@ -1,0 +1,24 @@
+Comprobación de desbordamiento horizontal (responsive) — Ronda 0
+==========================================================
+
+Método: Chrome headless vía CDP con `Emulation.setDeviceMetricsOverride`, que
+fija el viewport CSS real (a diferencia de `--window-size`, que Chrome headless
+acota a ~526 px y recortaba la captura, dando un falso positivo de desbordamiento).
+
+En cada ancho se mide `innerWidth` vs `scrollWidth` y se listan los elementos cuyo
+borde derecho excede el viewport.
+
+  viewport   innerWidth  scrollWidth  elementos desbordados
+  ---------  ---------  -----------  --------------------
+      320 px      320         320   ninguno
+      390 px      390         390   ninguno
+      768 px      768         768   ninguno
+     1440 px     1440        1440   ninguno
+
+Conclusión: no hay desbordamiento horizontal en ningún ancho, incluido un móvil
+de 320 px. El layout es mobile-first real.
+
+Nota sobre las capturas: las de `docs/screenshots/` están tomadas con viewport
+real (mismo método). Una captura hecha con `--window-size=390` sin emulación
+aparece recortada porque Chrome headless nunca baja de ~526 px de ancho de
+ventana: no es un fallo de CSS.

@@ -1,0 +1,11 @@
+backup almacenado: ok (/backups/openlibrary-20261004T172935Z.dump)
+generando dump de pruebaÔÇª
+restore: ok ÔÇö comparando filas (viva vs restaurada):
+  app_config                   10 filas  ok
+  audit_log                     1 filas  ok
+  flyway_schema_history         2 filas  ok
+  spring_session                1 filas  ok
+  spring_session_attributes      1 filas  ok
+  users                         1 filas  ok
+RESULTADO: backup restaurable y consistente con la base viva
+EXIT=0
