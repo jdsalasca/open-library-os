@@ -1,0 +1,29 @@
+{
+  "ISBN:9780306406157": {
+    "url": "/books/OL1234567M",
+    "key": "/books/OL1234567M",
+    "title": "Neuromancer",
+    "authors": [
+      { "name": "William Gibson" }
+    ],
+    "number_of_pages": 271,
+    "pagination": "271 pages",
+    "by_statement": "William Gibson",
+    "publishers": [
+      { "name": "Ace" }
+    ],
+    "publish_places": [
+      { "name": "New York" }
+    ],
+    "publish_date": "1984-07",
+    "subjects": [
+      { "name": "Science fiction" },
+      { "name": "Cyberpunk" },
+      { "name": "Dystopias" }
+    ],
+    "cover": {
+      "small": "https://covers.openlibrary.org/b/id/1234567-S.jpg",
+      "large": "https://covers.openlibrary.org/b/id/1234567-L.jpg"
+    }
+  }
+}
