@@ -135,18 +135,22 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ## Ronda 5 — Rellenado automático por ISBN
 
-**Estado:** dominio y primer proveedor hechos (2026-10-04), **31 tests verdes**: `Isbn`
-(checksum y normalización ISBN-10/13), `ExternalBook` (modelo común) y `OpenLibraryProvider`
-(real, sin API key). Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
-Falta: caché `isbn_cache`, Google Books, endpoint REST y el botón en el formulario.
+**Estado:** backend completo (2026-10-04), **36 tests verdes**: `Isbn` (checksum y
+normalización ISBN-10/13), `ExternalBook` (modelo común), `OpenLibraryProvider` (real,
+sin API key, con WireMock) y `GET /api/isbn/{isbn}` con caché en Postgres (`V6`).
+Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
+Falta: Google Books, circuit-breaker y el botón en el formulario de libro.
 
 **Objetivo:** escribir 13 dígitos y obtener la ficha completa.
 
-- Migración `V6`: `isbn_cache`.
+- Migración `V6`: `isbn_cache` — **hecha**. Guarda también los fallos: sin eso, quien teclea
+  un ISBN desconocido golpearía la API externa en cada intento.
 - Proveedores: Open Library (sin key, **hecho**), Google Books (opcional), ambos normalizados a
-  un modelo común `ExternalBook`. Caché en BD; timeout y circuit-breaker; si todo falla →
-  formulario manual. `OpenLibraryProvider` ya degrada a vacío sin propagar errores: una
+  un modelo común `ExternalBook`. Caché en BD; timeout de 5 s ya configurado; si todo falla →
+  formulario manual. `OpenLibraryProvider` degrada a vacío sin propagar errores: una
   biblioteca sin internet debe poder dar de alta un libro a mano.
+  El endpoint responde 400 con `code: invalid_isbn` si el checksum no cuadra y 404 si nadie
+  conoce el ISBN, para que la UI ofrezca el formulario manual en ambos casos.
 - Frontend: en el formulario de libro, botón "Buscar por ISBN" con preview antes de aplicar,
   indicador de origen de cada campo.
 - Tests: checksum ISBN-10/13, parseo de respuestas con fixtures, fallback manual, caché.
