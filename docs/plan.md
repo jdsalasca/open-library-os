@@ -117,6 +117,11 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ## Ronda 5 — Rellenado automático por ISBN
 
+**Estado:** dominio hecho (2026-10-04), 20 tests verdes: `Isbn` (checksum y
+normalización ISBN-10/13) y `ExternalBook` (modelo común para los proveedores).
+Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
+Falta: proveedores HTTP, caché `isbn_cache` y el botón en el formulario de libro.
+
 **Objetivo:** escribir 13 dígitos y obtener la ficha completa.
 
 - Migración `V6`: `isbn_cache`.
