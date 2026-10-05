@@ -105,7 +105,6 @@ const scene = await setup.evaluate(async (readerEmail) => {
     throw new Error(`no se pudo crear el lector: ${JSON.stringify(created)}`);
   }
   const reader = { id: created.body.id };
-  const books = await call('GET', '/catalog/books?size=20');
 
   // A book made for this run, so the scene does not depend on whatever the
   // catalogue happens to look like after a dozen screenshot passes.

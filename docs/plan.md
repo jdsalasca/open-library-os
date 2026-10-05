@@ -395,6 +395,46 @@ y no había ninguna pantalla suya.
 
 ---
 
+## Ronda 9 — Tus datos, accesibilidad y documentación
+
+**Objetivo:** que la propiedad de los datos sea una botón y no una promesa, y comprobar con una
+herramienta real que la interfaz es usable.
+
+- **Ajustes > Tus datos** (`/ajustes/datos`, solo ADMINISTRADOR): descarga la biblioteca entera a
+  un JSON y la restaura desde el mismo sitio. El informe de importación dice cuántos registros se
+  crearon, cuántos se actualizaron y cuántos se omitieron, en palabras y no con identificadores.
+- El selector de ficheros es propio (`publico/theme.js`-style label + input oculto): el nativo dice
+  "Choose File" en inglés y **no hay CSS que lo traduzca**. Sigue siendo foco de teclado y lo lee el
+  lector de pantalla.
+- `api.postJson` en el cliente: un documento que el servidor ya produjo tiene que enviarse tal cual,
+  porque `JSON.stringify` lo convertiría en un literal JSON y el backend recibiría una cadena.
+- **Auditoría de accesibilidad con axe** (`scripts/a11y-audit.mjs`): 2 roles × 2 temas × 9 pantallas =
+  36 combinaciones. Falla si aparece cualquier violación seria o crítica.
+  Resultado: **0 violaciones serias o críticas**, con el informe completo en
+  `docs/evidence/round-9/axe-report.json`.
+- **Contraste corregido con números, no a ojo.** `--text-subtle` daba 2.99:1 sobre la cabecera de
+  tabla (WCAG AA pide 4.5:1 a 12px) y `--text-muted` del tema oscuro 3.58:1 sobre la superficie
+  elevada. Ahora son 4.97:1 y 5.23:1, medidos, y se documenta el porqué en `_tokens.scss`.
+- **README** al día: qué hace la aplicación, cómo exportar por línea de órdenes, cómo comprobar que
+  un respaldo se restaura de verdad (`scripts/verify-restore.sh`), los comandos de pruebas y los de
+  accesibilidad. `markdownlint` sin una sola queja.
+
+**Estado:** `done` (2026-10-05). Backend **257 tests verdes** (11 de export/import), frontend
+**70 verdes**, `oxlint` 0 avisos, `tsc` limpio, `markdownlint` limpio, 4 servicios `healthy`.
+
+- **Tres bugs reales encontrados por el viaje completo de exportar → importar → importar otra vez**,
+  ninguno cubierto antes porque ninguna prueba había exportado un documento con préstamos dentro:
+  1. Las fechas iban como `Instant` sin tipo SQL y cualquier biblioteca con un préstamo devolvía 500.
+  2. Reimportar chocaba con `loans_one_active_per_copy`: la fila nueva tiene id nuevo y `ON CONFLICT`
+     no la ve. Ahora se pregunta si el ejemplar ya está fuera y se omite.
+  3. Lo mismo con `reservations_one_open_per_reader`.
+- Y uno cuarto que solo apareció al leer el informe de la UI: **71 ejemplares se omitían** porque una
+  copia sin estantería se confundía con una irrestaurable. Un ejemplar sin
+  asignar es lo normal: está esperando a que le toque una estantería. Ahora se
+  importa y el informe dice `copies 0 115 0`.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

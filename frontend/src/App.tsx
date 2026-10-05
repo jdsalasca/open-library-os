@@ -9,6 +9,7 @@ import { Catalog } from './pages/Catalog';
 import { Inventory } from './pages/Inventory';
 import { LibraryMap } from './pages/LibraryMap';
 import { MyLibrary_ } from './pages/MyLibrary';
+import { LibraryData } from './pages/DataTransfer';
 import { Loans } from './pages/Loans';
 import { ChangePassword } from './pages/ChangePassword';
 import { Home } from './pages/Home';
@@ -45,6 +46,12 @@ const NAV: NavItem[] = [
     roles: ['ADMINISTRATIVO', 'ADMINISTRADOR'],
   },
   { to: '/ajustes', label: 'Mi contrasena', icon: 'shield', roles: ['ADMINISTRADOR'] },
+  {
+    to: '/ajustes/datos',
+    label: 'Tus datos',
+    icon: 'catalog',
+    roles: ['ADMINISTRADOR'],
+  },
 ];
 
 export default function App() {
@@ -114,6 +121,7 @@ export default function App() {
             }
           />
           <Route path="/ajustes" element={<ChangePassword />} />
+          <Route path="/ajustes/datos" element={<LibraryData />} />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

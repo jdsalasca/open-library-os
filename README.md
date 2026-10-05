@@ -6,7 +6,21 @@ Gestion de librerias autoalojada. Descarga, `docker compose up -d`, y ya.
 - **Frontend:** React 19 + Vite + TypeScript + SCSS, con tema claro y oscuro
 - **Despliegue:** un solo comando, cuatro contenedores, respaldos incluidos
 
-Tus datos viven en tu servidor. Sin servicios externos, sin cuentas, sin soporte de terceros.
+Tus datos viven en tu servidor. Sin servicios externos, sin cuentas,
+sin soporte de terceros.
+
+## Que hace
+
+- **Catalogo** con autores multiples, editoriales, categorias e ISBN.
+- **Ejemplares** con codigo legible, EAN-13 y QR, etiqueta imprimible y
+  ubicaciones fisicas (sala, pasillo, estante, deposito) con coordenadas.
+- **Prestamos** en el mostrador con escaner USB, camara o a mano, con cola de
+  reservas, renovaciones y vencimientos.
+- **Mapa del local** en 3D para encontrar un libro desde el movil.
+- **Mi biblioteca** para el lector: lo que tiene prestado, lo que espera y su
+  historial.
+- **Tus datos**: exporta la biblioteca entera a un JSON y restáurala donde
+  quieras. Tus datos son tuyos.
 
 ---
 
@@ -59,7 +73,8 @@ docker compose exec db psql -U openlibrary -d openlibrary \
 ## Respaldo y restauracion
 
 El servicio `backup` crea un `pg_dump` al arrancar y despues cada `BACKUP_INTERVAL`
-segundos, en el volumen `backups`. Cada dump se valida con `pg_restore --list`; los
+segundos, en el volumen `backups`. Cada dump se valida con
+`pg_restore --list`; los
 que no se pueden leer se descartan. Se conservan los ultimos `KEEP_DAYS` dias.
 
 ```bash
@@ -69,23 +84,49 @@ docker compose exec backup ls -l /backups   # historial de respaldos
 Copia el dump a otra instalacion:
 
 ```bash
-docker compose exec -T db pg_restore -U openlibrary -d openlibrary --clean --if-exists \
+docker compose exec -T db pg_restore -U openlibrary -d openlibrary
+  --clean --if-exists < backup.dump
   < backup.dump
 ```
 
-La migracion entre instancias tambien esta disponible desde la UI (Ajustes >
-Exportar / Importar) en una version posterior.
+La migracion entre instancias tambien esta disponible desde la interfaz, en
+**Ajustes > Tus datos**: se descarga un JSON con todo y se vuelve a subir. El
+import es un *upsert* por clave natural, asi que repetirlo no duplica nada. Para
+hacerlo desde la linea de ordenes:
+
+```bash
+curl -sc cookies.txt http://localhost:8080/api/auth/csrf > /dev/null
+curl -sb cookies.txt -c cookies.txt -X POST
+  http://localhost:8080/api/auth/login
+  -H 'Content-Type: application/json' \
+  -d '{"email":"admin@local","password":"TU-CONTRASENA"}' > /dev/null
+curl -sb cookies.txt http://localhost:8080/api/admin/export -o biblioteca.json
+```
+
+### Comprobar que un respaldo sirve de verdad
+
+Un `pg_dump` que no se ha restaurado nunca es una suposición. Este script
+restaura el último dump del volumen en una base temporal **dentro** del
+contenedor, compara los conteos con la base viva y sale con código distinto de
+cero si algo no cuadra:
+
+```bash
+sh scripts/verify-restore.sh
+```
 
 ### Migraciones: la regla que no se rompe
 
-Flyway comprueba el checksum de cada migracion ya aplicada. Si editas un fichero `V*.sql`
-que ya se ejecutó, el backend **no arrancará** y lo dirá claramente. Es intencionado: es la
-protección que garantiza que tu base de datos y tu código nunca diverjan en silencio.
+Flyway comprueba el checksum de cada migracion ya aplicada. Si editas un
+fichero `V*.sql` que ya se ejecuto, el backend **no arrancara** y lo dira
+claramente. Es intencionado: es la proteccion que garantiza que tu base de
+datos y tu codigo nunca diverjan en silencio.
 
-- **Antes de una release:** las migraciones son inmutables. Corrige con una `V*.sql` nueva.
-- **En desarrollo, si te pasa:** `docker compose run --rm backend` no sirve; recrea el volumen
-  (`docker compose down && docker volume rm open-library-os_pgdata && docker compose up -d`)
-  o actualiza los checksums con `repair` de Flyway.
+- **Antes de una release:** las migraciones son inmutables. Corrige con
+  una `V*.sql` nueva.
+- **En desarrollo, si te pasa:** `docker compose run --rm backend` no sirve;
+  recrea el volumen con `docker compose down`,
+  `docker volume rm open-library-os_pgdata` y `docker compose up -d`, o
+  actualiza los checksums con `repair` de Flyway.
 
 ---
 
@@ -102,31 +143,38 @@ cd frontend && npm install && npm run dev   # http://localhost:5173
 
 Puertas y credenciales de la base de datos:
 
-| Variable      | Por defecto     |
-| ------------- | --------------- |
-| `DB_URL`      | `jdbc:postgresql://localhost:5432/openlibrary` |
-| `DB_USER`     | `openlibrary`   |
-| `DB_PASSWORD` | `openlibrary`   |
+| Variable      | Por defecto                          |
+| ------------- | ------------------------------------ |
+| `DB_URL`      | `jdbc:postgresql://host:5432/db`     |
+| `DB_USER`     | `openlibrary`                        |
+| `DB_PASSWORD` | `openlibrary`                        |
 
 ### Pruebas
 
 ```bash
-cd backend  && mvn test          # JUnit 5 + Testcontainers (Postgres real)
-cd frontend && npm test          # Vitest + Testing Library
+cd backend  && mvn -B clean test    # JUnit 5 + Testcontainers (Postgres real)
+cd frontend && npx vitest run      # Vitest + Testing Library
 cd frontend && npx tsc -b --noEmit
+cd frontend && npx oxlint
 ```
 
 Los tests de backend levantan un Postgres efimero con Testcontainers, de modo que
 las migraciones de Flyway se ejecutan de verdad en cada prueba.
 
-### Capturas de pantalla (QA visual)
+En GitHub Actions, `.github/workflows/ci.yml` ejecuta exactamente esos cuatro
+comandos en cada `push` a `develop`.
+
+### Accesibilidad y capturas (QA visual)
 
 ```bash
 cd frontend
-node scripts/screenshot.mjs http://127.0.0.1:8080 ../docs/screenshots r0
+node scripts/a11y-audit.mjs                       # axe sobre todas las pantallas
+node scripts/screenshot-loans.mjs                 # y los demas scripts screenshot-*
 ```
 
-Genera claro/oscuro x escritorio/movil y falla si hay errores en la consola.
+`a11y-audit.mjs` recorre las ocho pantallas en claro y en oscuro, con los dos
+roles, y falla si aparece cualquier violacion seria o critica. Los scripts de
+captura fallan si la consola marca un error o si una pantalla desborda en movil.
 
 ---
 
@@ -137,7 +185,7 @@ Genera claro/oscuro x escritorio/movil y falla si hay errores en la consola.
 
 ## Estructura
 
-```
+```text
 backend/    Spring Boot (paquetes por modulo: auth, catalog, inventory, loans…)
 frontend/   Vite + React (design system en src/design, componentes en src/components)
 deploy/     Scripts de operacion (respaldos)

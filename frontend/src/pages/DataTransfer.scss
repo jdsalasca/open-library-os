@@ -1,0 +1,129 @@
+@use '../design/tokens' as t;
+@use '../design/mixins' as *;
+
+.transfer__grid {
+  display: grid;
+  gap: var(--space-5);
+
+  @include from(t.$bp-lg) {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+.transfer__hint {
+  margin-bottom: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.transfer__counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-top: var(--space-4);
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    padding: var(--space-1) var(--space-2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius-pill);
+    font-size: var(--text-xs);
+    color: var(--text-muted);
+  }
+}
+
+.transfer__report {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.transfer__report-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--success);
+}
+
+.transfer__table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: var(--text-sm);
+
+  th,
+  td {
+    padding: var(--space-2);
+    text-align: end;
+    border-bottom: 1px solid var(--border-subtle);
+  }
+
+  thead th {
+    font-size: var(--text-xs);
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+    color: var(--text-subtle);
+  }
+
+  tbody th {
+    text-align: start;
+    font-weight: var(--weight-medium);
+  }
+
+  td {
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.transfer__error {
+  margin-top: var(--space-5);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+// The native file picker says ""Choose File"" in English and no stylesheet can
+// translate it, so the button is our own and the real input stays behind the
+// label, focusable and announced by the screen reader.
+.transfer__file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  input[type='file'] {
+    @include visually-hidden;
+  }
+
+  &:focus-within {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.transfer__file-button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+  white-space: nowrap;
+}
+
+.transfer__file-name {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  overflow-wrap: anywhere;
+}

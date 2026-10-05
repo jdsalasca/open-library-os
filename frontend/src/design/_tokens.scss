@@ -90,8 +90,11 @@ $font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas,
   --border-strong: #d2ccbe;
 
   --text: #1c1a17;
-  --text-muted: #6b665d;
-  --text-subtle: #8f8a80;
+  --text-muted: #5d584f;
+  // Measured, not guessed: the old #8f8a80 gave 2.99:1 on the table header, under
+  // the 4.5:1 that WCAG AA asks for at 12px. This is 4.97:1 on #f2efe8 and
+  // 5.71:1 on white, and it still reads as secondary next to --text-muted.
+  --text-subtle: #6b665c;
   --text-inverted: #ffffff;
 
   --accent: #1f6f5c;
@@ -132,8 +135,10 @@ $font-mono: ui-monospace, 'JetBrains Mono', 'Cascadia Code', Menlo, Consolas,
   --border-strong: #423f38;
 
   --text: #f2efe8;
-  --text-muted: #a49e93;
-  --text-subtle: #7d776d;
+  --text-muted: #b0a99e;
+  // Same reasoning as the light theme: #7d776d was 3.58:1 on the raised surface.
+  // #9a938a is 5.67:1 on --surface and 5.23:1 on --surface-raised.
+  --text-subtle: #9a938a;
   --text-inverted: #131311;
 
   --accent: #4fbf9e;

@@ -317,14 +317,14 @@ class LibraryTransferService {
             }
             var locationCode = text(row.get("location_code"));
             Long locationId = locationCode == null ? null : locationIds.get(locationCode);
-            var isNew = jdbc.queryForObject("select count(*) from copies where code = ?",
-                    Integer.class, code) == 0;
-            if (bookId == null || locationCode == null && locationId == null) {
+            if (bookId == null) {
                 // A copy without its book cannot be restored; skipping it loudly
-                // beats importing a row that points nowhere.
+                // beats importing a row that points nowhere. A copy with no shelf is
+                // perfectly normal though: it is simply waiting to be shelved.
                 record(skipped, skipped, "copies", true);
                 continue;
             }
+            record(created, updated, "copies", isNew("copies", "code", code));
             jdbc.update("""
                     insert into copies (code, barcode, qr, book_id, location_id, status,
                                         acquired_at, price, notes)
@@ -337,7 +337,6 @@ class LibraryTransferService {
                     bookId, locationId,
                     String.valueOf(row.get("status")), date(row.get("acquired_at")),
                     decimal(row.get("price")), text(row.get("notes")));
-            record(created, updated, "copies", isNew);
         }
 
         var copyIds = new LinkedHashMap<String, Long>();
@@ -352,19 +351,24 @@ class LibraryTransferService {
                 record(skipped, skipped, "loans", true);
                 continue;
             }
-            // Keyed on copy plus borrowed_at, which together identify one loan.
-            var exists = jdbc.queryForObject("""
-                    select count(*) from loans
-                    where copy_id = ? and borrowed_at = ?
-                    """, Integer.class, copyId, instant(row.get("borrowed_at")));
+            // loans_one_active_per_copy only admits one open loan per copy, and the
+            // imported row always gets a fresh id, so ON CONFLICT cannot catch this.
+            // Ask whether the copy is already out and skip instead of blowing up.
+            var alreadyOut = jdbc.queryForObject(
+                    "select count(*) from loans where copy_id = ? and returned_at is null",
+                    Integer.class, copyId);
+            if (alreadyOut != null && alreadyOut > 0) {
+                record(skipped, skipped, "loans", true);
+                continue;
+            }
             jdbc.update("""
                     insert into loans (copy_id, user_id, borrowed_at, due_at, returned_at, renewals)
                     values (?, ?, ?, ?, ?, ?)
                     on conflict (id) do nothing
-                    """, copyId, userId, instant(row.get("borrowed_at")),
-                    instant(row.get("due_at")), instant(row.get("returned_at")),
+                    """, copyId, userId, timestamp(row.get("borrowed_at")),
+                    timestamp(row.get("due_at")), timestamp(row.get("returned_at")),
                     intOr(row.get("renewals"), 0));
-            record(created, updated, "loans", exists != null && exists == 0);
+            record(created, updated, "loans", true);
         }
 
         for (var row : document.reservations()) {
@@ -377,17 +381,24 @@ class LibraryTransferService {
                 record(skipped, skipped, "reservations", true);
                 continue;
             }
-            var exists = jdbc.queryForObject("""
+            // Same story as loans: the reader may only hold one open place per book,
+            // and a fresh id defeats ON CONFLICT.
+            var alreadyQueued = jdbc.queryForObject("""
                     select count(*) from reservations
-                    where book_id = ? and user_id = ? and created_at = ?
-                    """, Integer.class, bookId, userId, instant(row.get("created_at")));
+                    where book_id = ? and user_id = ?
+                      and fulfilled_at is null and cancelled_at is null
+                    """, Integer.class, bookId, userId);
+            if (alreadyQueued != null && alreadyQueued > 0) {
+                record(skipped, skipped, "reservations", true);
+                continue;
+            }
             jdbc.update("""
                     insert into reservations (book_id, user_id, created_at, fulfilled_at, cancelled_at)
                     values (?, ?, ?, ?, ?)
                     on conflict (id) do nothing
-                    """, bookId, userId, instant(row.get("created_at")),
-                    instant(row.get("fulfilled_at")), instant(row.get("cancelled_at")));
-            record(created, updated, "reservations", exists != null && exists == 0);
+                    """, bookId, userId, timestamp(row.get("created_at")),
+                    timestamp(row.get("fulfilled_at")), timestamp(row.get("cancelled_at")));
+            record(created, updated, "reservations", true);
         }
 
         // Configuration last: it decides how the imported loans behave from now on.
@@ -502,6 +513,16 @@ class LibraryTransferService {
 
     private static Instant instant(Object value) {
         return value == null ? null : Instant.parse(String.valueOf(value));
+    }
+
+    /**
+     * Timestamps have to go as SQL timestamps: passing an {@link Instant} straight to
+     * JdbcTemplate leaves it unable to infer the type, and a library with any loan in
+     * it failed to import with a 500.
+     */
+    private static java.sql.Timestamp timestamp(Object value) {
+        var at = instant(value);
+        return at == null ? null : java.sql.Timestamp.from(at);
     }
 
     private static String slug(String name) {

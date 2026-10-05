@@ -219,6 +219,100 @@ class ExportImportApiTest extends PostgresTest {
     }
 
     @Test
+    void carriesLoansAndReservationsAcrossMachines() {
+        // Found by the round 9 screenshots: importing a library that had any loan in
+        // it used to fail with a 500, because the timestamps were bound without a SQL
+        // type. No test had ever exported a document with loans in it.
+        var room = librarian().post("/inventory/locations",
+                Map.of("code", "SALA-9", "name", "Sala 9", "kind", "SALA"));
+        var aisle = librarian().post("/inventory/locations",
+                Map.of("code", "P-9", "name", "Pasillo 9", "kind", "PASILLO",
+                        "parentId", Long.valueOf(room.text("id"))));
+        var shelf = librarian().post("/inventory/locations",
+                Map.of("code", "E-9", "name", "Estante 9", "kind", "ESTANTE",
+                        "parentId", Long.valueOf(aisle.text("id"))));
+        var copies = librarian().post("/inventory/copies/bulk",
+                Map.of("bookId", bookId, "quantity", 2, "locationId", Long.valueOf(shelf.text("id"))));
+        var copyId = copies.json().path("created").get(0).path("id").asLong();
+
+        var readerId = Long.valueOf(
+                signedIn(DemoUsers.READER_EMAIL, DemoUsers.READER_PASSWORD).get("/auth/me").text("id"));
+        var loan = librarian().post("/loans", Map.of("copyId", copyId, "readerId", readerId));
+        assertThat(loan.status()).as("borrow: %s", loan.body()).isEqualTo(201);
+
+        // A different title for the reservation: the reader cannot queue for the one
+        // they are holding, and cannot queue for one that is on the shelf.
+        var clerk = signedIn(DemoUsers.CLERK_EMAIL, DemoUsers.CLERK_PASSWORD);
+        var wanted = clerk.post("/catalog/books", Map.of(
+                "title", "El nombre de la rosa",
+                "isbn", "9788426403568",
+                "authors", List.of(Map.of("name", "Umberto Eco", "role", "AUTOR"))));
+        assertThat(wanted.status()).as("second book: %s", wanted.body()).isEqualTo(201);
+
+        var reader = signedIn(DemoUsers.READER_EMAIL, DemoUsers.READER_PASSWORD);
+        var reserved = reader.post("/loans/reservations",
+                Map.of("bookId", Long.valueOf(wanted.text("id"))));
+        assertThat(reserved.status()).as("reserve: %s", reserved.body()).isEqualTo(201);
+
+        String document = admin.get("/admin/export").body();
+        assertThat(document).contains("borrowed_at");
+
+        emptyTheLibrary();
+
+        var imported = admin.postJson("/admin/import", document);
+
+        assertThat(imported.status()).as("import: %s", imported.body()).isEqualTo(200);
+        assertThat(count("loans")).isEqualTo(1);
+        assertThat(count("reservations")).isEqualTo(1);
+        // The due date has to survive the trip, not come back as an epoch.
+        String dueAt = jdbc.queryForObject("select due_at from loans limit 1", String.class);
+        assertThat(dueAt).isNotNull();
+        assertThat(dueAt).doesNotContain("1970");
+
+        // Restoring the same document again must be a no-op: the copy is still out,
+        // and loans_one_active_per_copy refuses a second open loan for it.
+        var again = admin.postJson("/admin/import", document);
+
+        assertThat(again.status()).as("second import: %s", again.body()).isEqualTo(200);
+        assertThat(count("loans")).isEqualTo(1);
+        assertThat(count("reservations")).isEqualTo(1);
+        assertThat(again.json().path("skipped").path("loans").asInt()).isEqualTo(1);
+    }
+
+    private HttpTestClient signedIn(String email, String password) {
+        var client = new HttpTestClient(port);
+        assertThat(client.post("/auth/login", Map.of("email", email, "password", password)).status())
+                .as("login %s", email).isEqualTo(200);
+        return client;
+    }
+
+    @Test
+    void bringsBackCopiesThatAreNotOnAShelfYet() {
+        // Found by the round 9 report: 71 copies were being skipped on import because
+        // a missing location was treated as an unrestorable row. A copy waiting to be
+        // shelved is perfectly normal.
+        var copies = librarian().post("/inventory/copies/bulk",
+                Map.of("bookId", bookId, "quantity", 3));
+        assertThat(copies.status()).as("stock: %s", copies.body()).isEqualTo(201);
+
+        String document = admin.get("/admin/export").body();
+        emptyTheLibrary();
+
+        var imported = admin.postJson("/admin/import", document);
+
+        assertThat(imported.status()).as("import: %s", imported.body()).isEqualTo(200);
+        assertThat(imported.json().path("skipped").path("copies").asInt()).isZero();
+        // Two copies were already shelved in setUp, three are waiting for a shelf.
+        assertThat(count("copies")).isEqualTo(5);
+        Integer withoutShelf = jdbc.queryForObject(
+                "select count(*) from copies where location_id is null", Integer.class);
+        assertThat(withoutShelf).isEqualTo(3);
+        Integer shelved = jdbc.queryForObject(
+                "select count(*) from copies where location_id is not null", Integer.class);
+        assertThat(shelved).isEqualTo(2);
+    }
+
+    @Test
     void onlyAnAdministratorCanMoveTheWholeLibrary() {
         var librarian = librarian();
         var reader = new HttpTestClient(port);

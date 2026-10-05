@@ -1,0 +1,3 @@
+auditoria axe: 2 roles x 2 temas x 9 pantallas = 36 combinaciones
+violaciones criticas o serias: 0
+informe completo: axe-report.json

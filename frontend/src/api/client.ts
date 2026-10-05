@@ -46,14 +46,16 @@ function readCookie(name: string): string | undefined {
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
+  /** Already-serialised JSON text, sent verbatim instead of being stringified. */
+  rawBody?: string;
   signal?: AbortSignal;
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, signal } = options;
+  const { method = 'GET', body, rawBody, signal } = options;
 
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  if (body !== undefined || rawBody !== undefined) headers['Content-Type'] = 'application/json';
 
   const csrf = readCookie(CSRF_COOKIE);
   if (csrf && method !== 'GET') headers[CSRF_HEADER] = csrf;
@@ -62,7 +64,9 @@ async function request<T>(path: string, options: RequestOptions = {}): Promise<T
     method,
     headers,
     credentials: 'include',
-    body: body === undefined ? undefined : JSON.stringify(body),
+    // A document the server produced must go as it is: JSON.stringify would turn it
+    // into a JSON string literal and the server would receive a string.
+    body: rawBody ?? (body === undefined ? undefined : JSON.stringify(body)),
     signal,
   });
 
@@ -92,5 +96,8 @@ export const api = {
   post: <T>(path: string, body?: unknown) => request<T>(path, { method: 'POST', body }),
   put: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PUT', body }),
   patch: <T>(path: string, body?: unknown) => request<T>(path, { method: 'PATCH', body }),
+  /** Raw JSON text, for a document that is already serialised (an export). */
+  postJson: <T>(path: string, rawBody: string) =>
+    request<T>(path, { method: 'POST', rawBody }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
 };
