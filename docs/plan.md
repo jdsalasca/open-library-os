@@ -135,12 +135,23 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ## Ronda 5 — Rellenado automático por ISBN
 
-**Estado:** backend completo (2026-10-04), **111 tests verdes**: `Isbn` (checksum y
-normalización ISBN-10/13), `ExternalBook` (modelo común), `OpenLibraryProvider` y
-`GoogleBooksProvider` (ambos con WireMock, sin salir a internet), `IsbnProviderChain`
-(fallback entre proveedores), `CircuitBreaker` y `GET /api/isbn/{isbn}` con caché en
-Postgres (`V6`). Evidencia en [`docs/evidence/round-5/`](evidence/round-5/).
-Falta: el botón "Buscar por ISBN" en el formulario de libro (depende de la ronda 2).
+**Estado:** `done` (2026-10-04). Backend **111 tests verdes** y frontend **38 verdes**
+(typecheck y oxlint limpios).
+
+- Backend: `Isbn` (checksum y normalización ISBN-10/13), `ExternalBook` (modelo común),
+  `OpenLibraryProvider` y `GoogleBooksProvider` (ambos con WireMock, sin salir a internet),
+  `IsbnProviderChain` (fallback), `CircuitBreaker` y `GET /api/isbn/{isbn}` con caché en
+  Postgres (`V6`).
+- Frontend: `api/isbn.ts` (errores tipados: `invalid` / `unknown` / `unreachable`) e
+  `IsbnLookupForm`, que muestra el resultado con su origen y **exige confirmación** antes
+  de aplicarlo.
+
+Evidencia (salida de tests y capturas reales de los cinco estados, claro y oscuro, más
+móvil) en [`docs/evidence/round-5/`](evidence/round-5/).
+
+**Pendiente de integración:** el componente está listo pero todavía no está montado en la
+pantalla de alta de libro, que pertenece a la ronda 2. Cuando exista, se conecta con
+`onApply` y esta ronda queda conectada de extremo a extremo.
 
 **Objetivo:** escribir 13 dígitos y obtener la ficha completa.
 
