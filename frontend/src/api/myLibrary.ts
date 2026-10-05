@@ -22,6 +22,15 @@ export function myLibrary() {
   return api.get<MyLibrary>('/loans/mine');
 }
 
+/**
+ * Renews one of the reader's own loans. The desk rules decide whether it can:
+ * overdue, the renewal cap or somebody waiting in the queue all say no, and the
+ * answer arrives as a message worth showing.
+ */
+export function renewMyLoan(loanId: number) {
+  return api.post<Loan>(`/loans/${loanId}/renew`);
+}
+
 /** A plain reading of the two numbers that matter on a due date. */
 export function daysLeft(dueAt: string, now = new Date()): number {
   const due = new Date(dueAt);

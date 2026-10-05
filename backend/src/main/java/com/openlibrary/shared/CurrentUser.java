@@ -37,4 +37,18 @@ public class CurrentUser {
                 (rs, i) -> rs.getLong(1), email);
         return ids.isEmpty() ? null : ids.getFirst();
     }
+
+    /**
+     * The authorities the session carries, so a service can tell a reader from
+     * the desk without repeating the role maths. Empty when nobody is signed in.
+     */
+    public java.util.Set<String> authorities() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || !auth.isAuthenticated()) {
+            return java.util.Set.of();
+        }
+        return auth.getAuthorities().stream()
+                .map(org.springframework.security.core.GrantedAuthority::getAuthority)
+                .collect(java.util.stream.Collectors.toUnmodifiableSet());
+    }
 }

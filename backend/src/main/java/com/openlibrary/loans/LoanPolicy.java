@@ -132,7 +132,10 @@ public final class LoanPolicy {
             throw new RuleViolation("book_reserved_by_other_reader",
                     "Hay alguien esperando este libro: no se puede renovar.");
         }
-        return loan.withDue(now.plus(settings.loanDays()), loan.renewals() + 1, Status.RENEWED);
+        // From the later of today and the current due date: renewing on day one buys
+        // the full period, and renewing late never takes days away.
+        Instant from = loan.dueAt().isAfter(now) ? loan.dueAt() : now;
+        return loan.withDue(from.plus(settings.loanDays()), loan.renewals() + 1, Status.RENEWED);
     }
 
     /** A loan is late only once the whole due day has passed. */

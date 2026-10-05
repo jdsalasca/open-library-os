@@ -605,6 +605,44 @@ serias/críticas**, smoke e2e **0 fallos**, sesión resistente al reinicio,
 
 ---
 
+## Ronda 14 — Renovar sin ir a la biblioteca
+
+**Objetivo:** un lector con un libro que vence mañana tenía que acercarse al
+mostrador a renovarlo. Es, probablemente, el motivo más frecuente de una visita
+que no hace falta.
+
+- `POST /loans/{id}/renew` pasa a estar abierto a **cualquier sesión**, con una
+  comprobación en el servicio: si el préstamo no es tuyo y no operas el mostrador,
+  **403 antes de evaluar una sola regla**. Prestar y devolver siguen siendo solo
+  del mostrador, y hay un test que lo dice.
+- Botón «Renovar» en Mi biblioteca, con la confirmación en pantalla («Renovado
+  hasta el …») y el motivo del rechazo del servidor cuando no puede. No se
+  ofrece en un préstamo ya vencido: la fecha alcanza para saberlo, sin inventar
+  un endpoint de ajustes para lectores.
+- `CurrentUser.authorities()` para que un servicio distinga al lector del
+  mostrador sin repetir el cálculo de roles.
+
+**El bug de dominio que salió al probarlo de verdad:**
+
+`checkRenewal` hacía `newDue = hoy + periodo`. Eso significa que **renovar el
+primer día no daba nada** (misma fecha) y que **renovar tarde recortaba** el
+préstamo. Ahora es `max(hoy, vencimiento) + periodo`, que es lo que hace toda
+biblioteca: renovar nunca te quita días. Dos tests de dominio nuevos; el viejo
+fijaba la aritmética antigua.
+
+El e2e lo cazó solo: la renovación «funcionaba» y el smoke detectó que la fecha
+no se movía. Sin esa comprobación habría salido un botón inútil.
+
+- `new Date()` en el render era un aviso legítimo de oxlint (`react(purity)`).
+  El botón usa el `overdue` que ya envía el servidor: ni una impureza ni una
+  regla duplicada en el cliente.
+
+**Estado:** `done` (2026-10-05). Backend **289 tests verdes** (7 de renovación,
+20 de política), frontend **87 verdes** (16 suites), `oxlint` 0 avisos, `tsc`
+limpio, axe **0 serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

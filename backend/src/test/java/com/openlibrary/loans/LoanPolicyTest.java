@@ -124,9 +124,36 @@ class LoanPolicyTest {
 
         var renewed = LoanPolicy.checkRenewal(loan, DEFAULTS, CLOCK);
 
-        assertThat(renewed.dueAt()).isEqualTo(NOW.plus(Duration.ofDays(21)));
+        assertThat(renewed.dueAt())
+                .isEqualTo(loan.dueAt().plus(DEFAULTS.loanDays()));
         assertThat(renewed.renewals()).isEqualTo(1);
         assertThat(renewed.status()).isEqualTo(LoanPolicy.Status.RENEWED);
+    }
+
+    @Test
+    void renewingOnTheFirstDayStillBuysYouTheFullPeriod() {
+        // Borrowed today: renewing today used to hand back the very same date,
+        // so the button gained the reader nothing at all.
+        var loan = new LoanPolicy.Loan(5L, NOW, NOW.plus(DEFAULTS.loanDays()),
+                0, null, LoanPolicy.Status.ACTIVE);
+
+        var renewed = LoanPolicy.checkRenewal(loan, DEFAULTS, CLOCK);
+
+        assertThat(renewed.dueAt())
+                .isEqualTo(NOW.plus(DEFAULTS.loanDays()).plus(DEFAULTS.loanDays()));
+    }
+
+    @Test
+    void renewingLateNeverShortensTheLoan() {
+        // Due tomorrow: a period is added to the due date, not counted from
+        // today, or renewing late would cost the reader days.
+        var loan = new LoanPolicy.Loan(5L, NOW.minus(Duration.ofDays(1)),
+                NOW.plus(Duration.ofDays(1)), 0, null, LoanPolicy.Status.ACTIVE);
+
+        var renewed = LoanPolicy.checkRenewal(loan, DEFAULTS, CLOCK);
+
+        assertThat(renewed.dueAt())
+                .isEqualTo(NOW.plus(Duration.ofDays(1)).plus(DEFAULTS.loanDays()));
     }
 
     @Test

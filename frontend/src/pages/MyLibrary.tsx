@@ -1,7 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from '../api/client';
-import { dueLabel, dueTone, myLibrary } from '../api/myLibrary';
+import { dueLabel, dueTone, myLibrary, renewMyLoan } from '../api/myLibrary';
 import { cancelReservation, REFUSAL_TEXT } from '../api/loans';
 import {
   Badge,
@@ -28,6 +28,13 @@ export function MyLibrary_() {
 
   const cancel = useMutation({
     mutationFn: cancelReservation,
+    onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['my-library'] }),
+  });
+
+// Coming back for a book that is due tomorrow is one of the commonest reasons
+  // to walk into a library. The same rules apply; only the trip is saved.
+  const renew = useMutation({
+    mutationFn: renewMyLoan,
     onSuccess: () => void queryClient.invalidateQueries({ queryKey: ['my-library'] }),
   });
 
@@ -87,12 +94,33 @@ export function MyLibrary_() {
                         <span className="mine__date">
                           {new Date(loan.dueAt).toLocaleDateString('es-ES')}
                         </span>
+                        {loan.overdue ? null : (
+                          <Button
+                            size="sm"
+                            variant="secondary"
+                            loading={renew.isPending && renew.variables === loan.id}
+                            onClick={() => renew.mutate(loan.id)}
+                          >
+                            Renovar
+                          </Button>
+                        )}
                       </div>
                     </li>
                   ))}
                 </ul>
               )}
             </Card>
+            {renew.isSuccess && (
+              <p className="mine__ok" role="status">
+                Renovado hasta el{' '}
+                {new Date(renew.data!.dueAt).toLocaleDateString('es-ES')}.
+              </p>
+            )}
+            {renew.isError && (
+              <p className="mine__error" role="alert">
+                {failure(renew.error)}
+              </p>
+            )}
           </section>
 
           {reservations.length > 0 && (

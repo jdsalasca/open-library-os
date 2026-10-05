@@ -114,3 +114,9 @@
     color: var(--text);
   }
 }
+
+.mine__ok {
+  margin: var(--space-2) 0 0;
+  color: var(--success);
+  font-size: var(--text-sm);
+}

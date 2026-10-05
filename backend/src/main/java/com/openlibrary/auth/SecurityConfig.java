@@ -72,6 +72,10 @@ public class SecurityConfig {
                         // A card holder may ask about their own loans, and only
                         // their own: the service takes the reader from the session.
                         .requestMatchers(HttpMethod.GET, "/loans/mine").authenticated()
+                        // A card holder may renew their own loan from home; the
+                        // service refuses it if it belongs to somebody else.
+                        // Everything else under /loans stays at the desk.
+                        .requestMatchers(HttpMethod.POST, "/loans/*/renew").authenticated()
                         .requestMatchers(HttpMethod.GET, "/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/reservations/**").authenticated()

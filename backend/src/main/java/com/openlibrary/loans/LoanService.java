@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.openlibrary.auth.Role;
 import com.openlibrary.catalog.Book;
 import com.openlibrary.catalog.BookRepository;
 import com.openlibrary.catalog.CatalogDtos;
@@ -114,6 +115,7 @@ public class LoanService {
     public LoanDtos.LoanSummary renew(Long loanId) {
         var loan = loans.findById(loanId)
                 .orElseThrow(() -> notFound("loan_not_found", "No existe el prestamo " + loanId + "."));
+        requireOwnerOrStaff(loan);
 
         var policyLoan = new LoanPolicy.Loan(loan.getCopyId(), loan.getBorrowedAt(),
                 loan.getDueAt(), loan.getRenewals(), loan.getReturnedAt(),
@@ -131,6 +133,21 @@ public class LoanService {
         audit.record(caller.id(), "loans.renewed", "loan", loanId,
                 Map.of("dueAt", decided.dueAt().toString()));
         return summary(loan);
+    }
+
+    /**
+     * Self-service renewal is open to the reader who owns the loan, and to the
+     * desk for anybody. Anyone else gets 403 before a single rule is evaluated.
+     */
+    private void requireOwnerOrStaff(Loan loan) {
+// Whoever operates the desk may renew anybody's loan; the administrator
+        // carries loans:operate too, so there is no second case to check.
+        if (caller.authorities().contains(Role.LOANS_OPERATE)
+                || loan.getUserId().equals(caller.id())) {
+            return;
+        }
+        throw new ApiException(HttpStatus.FORBIDDEN, "loan_not_yours",
+                "Ese prestamo no es tuyo.");
     }
 
     @Transactional

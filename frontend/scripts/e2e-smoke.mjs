@@ -18,7 +18,7 @@ import path from 'node:path';
 
 const BASE = process.argv[2] ?? process.env.BASE_URL ?? 'http://127.0.0.1:8090';
 // Screenshots belong in the repo's docs, not inside frontend/.
-const SHOTS = path.resolve('../docs/screenshots/round-11');
+const SHOTS = path.resolve('../docs/screenshots/round-14');
 const BOOK_TITLE = 'La ruta delFFFFF';
 const ADMIN = { email: 'admin@local', password: 'NuevaClave2026' };
 const stamp = Date.now();
@@ -203,6 +203,24 @@ check(
   'el préstamo aparece en su lista, no solo en el texto',
 );
 await reader.screenshot({ path: path.join(SHOTS, '02-mi-biblioteca.png') });
+
+// The reader renews from home, without walking to the desk.
+const renew = reader.locator('button:has-text("Renovar")').first();
+check(await renew.count() > 0, 'el lector ve el botón de renovar en su rincon');
+const dueBefore = await reader.locator('.mine__date').first().innerText();
+await renew.click();
+const status = reader.locator('[role="status"]');
+const renewed = await status
+  .waitFor({ timeout: 15_000 })
+  .then(() => true)
+  .catch(() => false);
+check(renewed, 'el lector renueva su propio préstamo');
+// The confirmation itself carries the new date: no waiting for a refetch to
+// land, which is what made this flaky the first time round.
+const said = renewed ? await status.innerText() : '';
+check(said.includes('Renovado'), `la biblioteca lo confirma en pantalla ("${said.trim()}")`);
+check(!said.includes(dueBefore), `la fecha se mueve (${dueBefore} -> ${said.trim()})`);
+await reader.screenshot({ path: path.join(SHOTS, '02b-renovado.png') });
 
 // ── and a reader cannot reach the desk ───────────────────────────────────────
 console.log('\nPermisos en la practica');
