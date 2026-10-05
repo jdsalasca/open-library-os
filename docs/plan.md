@@ -135,23 +135,20 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ## Ronda 5 — Rellenado automático por ISBN
 
-**Estado:** `done` (2026-10-04). Backend **111 tests verdes** y frontend **38 verdes**
-(typecheck y oxlint limpios).
+**Estado:** `done` (2026-10-04). Backend **111 tests verdes** y frontend **43 verdes**
+(typecheck, oxlint y build limpios).
 
 - Backend: `Isbn` (checksum y normalización ISBN-10/13), `ExternalBook` (modelo común),
   `OpenLibraryProvider` y `GoogleBooksProvider` (ambos con WireMock, sin salir a internet),
   `IsbnProviderChain` (fallback), `CircuitBreaker` y `GET /api/isbn/{isbn}` con caché en
   Postgres (`V6`).
-- Frontend: `api/isbn.ts` (errores tipados: `invalid` / `unknown` / `unreachable`) e
-  `IsbnLookupForm`, que muestra el resultado con su origen y **exige confirmación** antes
-  de aplicarlo.
+- Frontend: `api/isbn.ts` (errores tipados: `invalid` / `unknown` / `unreachable`) y
+  `IsbnLookupForm`, **conectado al formulario de libro**: el ISBN se teclea una sola vez,
+  el resultado se muestra con su origen y exige confirmación, y al aplicar solo se
+  rellenan los campos que el proveedor conoce (nunca borra trabajo manual).
 
-Evidencia (salida de tests y capturas reales de los cinco estados, claro y oscuro, más
-móvil) en [`docs/evidence/round-5/`](evidence/round-5/).
-
-**Pendiente de integración:** el componente está listo pero todavía no está montado en la
-pantalla de alta de libro, que pertenece a la ronda 2. Cuando exista, se conecta con
-`onApply` y esta ronda queda conectada de extremo a extremo.
+Evidencia (salida de tests y capturas reales de los estados, claro y oscuro, más móvil)
+en [`docs/evidence/round-5/`](evidence/round-5/).
 
 **Objetivo:** escribir 13 dígitos y obtener la ficha completa.
 
