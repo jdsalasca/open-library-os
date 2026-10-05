@@ -49,6 +49,14 @@ export function listLoans(
   return api.get<Page<Loan>>(`/loans${queryString(query)}`);
 }
 
+/**
+ * The overdue list as a spreadsheet, for working down the calls. Goes through
+ * the API client so the session and the CSRF rules are the usual ones.
+ */
+export function downloadOverdueCsv() {
+  return api.download('/loans/overdue.csv', 'prestamos-vencidos.csv');
+}
+
 export interface UrgentLoan {
   readerName: string;
   readerEmail: string;

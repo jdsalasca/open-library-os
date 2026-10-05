@@ -100,4 +100,24 @@ export const api = {
   postJson: <T>(path: string, rawBody: string) =>
     request<T>(path, { method: 'POST', rawBody }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
+  /**
+   * Downloads a file the server built. Goes through fetch rather than a plain
+   * link so the session cookie and the CSRF rules stay the same as everywhere
+   * else: a bare `<a href>` would be a second, unprotected way into the API.
+   */
+  download: async (path: string, filename: string) => {
+    const response = await fetch(`/api${path}`, { credentials: 'same-origin' });
+    if (!response.ok) {
+      const payload: unknown = safeParse(await response.text());
+      throw new ApiError(response.status, (payload ?? {}) as Problem);
+    }
+    const blob = await response.blob();
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement('a');
+    link.href = url;
+    link.download = filename;
+    link.click();
+    URL.revokeObjectURL(url);
+    return blob;
+  },
 };

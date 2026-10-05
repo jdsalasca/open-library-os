@@ -1,10 +1,13 @@
 package com.openlibrary.loans;
 
+import java.nio.charset.StandardCharsets;
 import java.util.List;
 
 import jakarta.validation.Valid;
 
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
@@ -67,6 +70,20 @@ public class LoanController {
      * The numbers behind the first screen. Staff only: it counts other people's
      * debts, so a card holder has no business here.
      */
+    /**
+ * The overdue list as a spreadsheet, for working down the phone calls.
+ *
+ * <p>Staff only, and it counts other people's debts.
+ */
+    @GetMapping(value = "/overdue.csv", produces = "text/csv;charset=UTF-8")
+    public ResponseEntity<byte[]> overdueCsv() {
+        var csv = OverdueCsv.render(loans.overdueForCalls());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"prestamos-vencidos.csv\"")
+                .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
+
     @GetMapping("/dashboard")
     public LoanDtos.Dashboard dashboard() {
         return loans.dashboard();

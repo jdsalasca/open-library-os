@@ -751,6 +751,40 @@ serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 5 capturas en
 
 ---
 
+## Ronda 18 — La hoja para trabajar la lista de llamadas
+
+**Objetivo:** la tabla del mostrador enseña quince préstamos por página. Cuando
+hay que llamar a veinte personas, eso no es una lista de trabajo: es scroll.
+
+- `GET /loans/overdue.csv` (`loans:operate`): lector, correo, libro, ejemplar,
+  vencimiento y **días de retraso**, ordenados por vencimiento, para empezar por
+  el más viejo.
+- Botón «Descargar vencidos (CSV)» en el mostrador, con confirmación en pantalla.
+
+**Tres detalles que separan un CSV útil de uno que tira una tarde:**
+
+- **BOM al principio.** Sin él Excel lee «García» como «GarcÃ­a», y quien lo
+  genera cree que los datos están mal. Comprobado en los bytes: `EF BB BF`.
+- **Comillas de verdad.** Un título de libro tiene derecho a contener una coma y
+  comillas: `"Cien años, de ""sol"""`. Concatenar a pelo partiría el título en
+  tres columnas.
+- **Protección contra fórmulas.** Una celda que empieza por `= + - @` la ejecuta
+  Excel en cuanto alguien la toca. Un nombre del tipo =HYPERLINK(...) se
+  guarda como texto, con un apostrofo delante. El test lo comprueba con un
+  =HYPERLINK de verdad.
+
+- La descarga va por **`fetch` con la sesión**, no por un `<a href>` pelado: un
+  enlace directo sería un segundo camino a la API sin las reglas de CSRF ni la
+  sesión, y justo el tipo de puerta trasera que este proyecto no quiere.
+
+**Estado:** `done` (2026-10-05). Backend **309 tests verdes** (8 del CSV),
+frontend **101 verdes** (20 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`. La descarga se
+verificó de verdad en el navegador: fichero `prestamos-vencidos.csv` guardado y
+contenido correcto, no solo un 200.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

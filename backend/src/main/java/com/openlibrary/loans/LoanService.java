@@ -186,6 +186,27 @@ public class LoanService {
                 found.getNumber(), found.getSize(), found.getTotalElements(), found.getTotalPages());
     }
 
+/** Who is late, ordered so the phone list can be worked down from the top. */
+    @Transactional(readOnly = true)
+    public List<OverdueCsv.Row> overdueForCalls() {
+        return jdbc.query("""
+                select u.full_name, u.email, b.title, c.code, l.due_at,
+                       current_date - l.due_at::date as days_late
+                from loans l
+                join users u on u.id = l.user_id
+                join copies c on c.id = l.copy_id
+                join books b on b.id = c.book_id
+                where l.returned_at is null and l.due_at < ?
+                order by l.due_at
+                """,
+                (rs, n) -> new OverdueCsv.Row(
+                        rs.getString("full_name"), rs.getString("email"),
+                        rs.getString("title"), rs.getString("code"),
+                        rs.getTimestamp("due_at").toInstant().toString(),
+                        rs.getInt("days_late")),
+                java.sql.Timestamp.from(startOfToday()));
+    }
+
     @Transactional(readOnly = true)
     public LoanDtos.SettingsSummary settingsSummary() {
         var settings = settings();

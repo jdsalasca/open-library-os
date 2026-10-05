@@ -1,0 +1,39 @@
+staff/light/inicio: 0 violaciones
+staff/dark/inicio: 0 violaciones
+staff/light/catalogo: 0 violaciones
+staff/dark/catalogo: 0 violaciones
+staff/light/inventario: 0 violaciones
+staff/dark/inventario: 0 violaciones
+staff/light/prestamos: 0 violaciones
+staff/dark/prestamos: 0 violaciones
+staff/light/mapa: 0 violaciones
+staff/dark/mapa: 0 violaciones
+staff/light/cuentas: 0 violaciones
+staff/dark/cuentas: 0 violaciones
+staff/light/mi-biblioteca: 0 violaciones
+staff/dark/mi-biblioteca: 0 violaciones
+staff/light/mi-contrasena: 0 violaciones
+staff/dark/mi-contrasena: 0 violaciones
+staff/light/tus-datos: 0 violaciones
+staff/dark/tus-datos: 0 violaciones
+lector/light/inicio: 0 violaciones
+lector/dark/inicio: 0 violaciones
+lector/light/catalogo: 0 violaciones
+lector/dark/catalogo: 0 violaciones
+lector/light/inventario: 0 violaciones
+lector/dark/inventario: 0 violaciones
+lector/light/prestamos: 0 violaciones
+lector/dark/prestamos: 0 violaciones
+lector/light/mapa: 0 violaciones
+lector/dark/mapa: 0 violaciones
+lector/light/cuentas: 0 violaciones
+lector/dark/cuentas: 0 violaciones
+lector/light/mi-biblioteca: 0 violaciones
+lector/dark/mi-biblioteca: 0 violaciones
+lector/light/mi-contrasena: 0 violaciones
+lector/dark/mi-contrasena: 0 violaciones
+lector/light/tus-datos: 0 violaciones
+lector/dark/tus-datos: 0 violaciones
+
+informe escrito en ../docs/evidence/round-18/axe-report.json
+sin violaciones criticas ni serias

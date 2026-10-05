@@ -5,7 +5,8 @@ import { ApiError } from '../api/client';
 import { lookupCopy, type Copy } from '../api/inventory';
 import {
   REFUSAL_TEXT,
-  borrow,
+borrow,
+  downloadOverdueCsv,
   listLoans,
   loanSettings,
   renewLoan,
@@ -192,19 +193,39 @@ export function Loans() {
 
   const canOperate = Boolean(user?.authorities?.includes('loans:operate'));
 
+  // Calling twenty people works better on paper than on a table that only shows
+  // fifteen rows at a time.
+  const csv = useMutation({
+    mutationFn: downloadOverdueCsv,
+    onSuccess: () => setNotice({ tone: 'ok', text: 'CSV descargado.' }),
+    onError: () =>
+      setNotice({ tone: 'ko', text: 'No se pudo generar el CSV de vencidos.' }),
+  });
+
   return (
     <div className="loans">
       <PageHead
         eyebrow="Mostrador"
         title="Prestamos"
         lead="Escanea el codigo del ejemplar y el carnet del lector. El escaner USB funciona solo: dispara y pulsa Enter."
-        actions={
-          settings.data ? (
-            <p className="loans__policy">
-              {settings.data.loanDays} dias · max {settings.data.readerLimit} por lector ·{' '}
-              {settings.data.maxRenewals} renovaciones
-            </p>
-          ) : undefined
+actions={
+          <>
+            {settings.data && (
+              <p className="loans__policy">
+                {settings.data.loanDays} dias · max {settings.data.readerLimit} por lector ·{' '}
+                {settings.data.maxRenewals} renovaciones
+              </p>
+            )}
+            {canOperate && (
+              <Button
+                variant="secondary"
+                loading={csv.isPending}
+                onClick={() => csv.mutate()}
+              >
+                Descargar vencidos (CSV)
+              </Button>
+            )}
+          </>
         }
       />
 
