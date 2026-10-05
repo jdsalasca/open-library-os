@@ -86,7 +86,9 @@ class PermissionMatrixTest extends PostgresTest {
                 // Stock is staff-only: readers see availability through the catalogue.
                 Arguments.of("GET", "/inventory/copies", "leer inventario",
                         403, 200, 200, 200),
-                Arguments.of("POST", "/inventory/copies", "escribir inventario",
+                Arguments.of("POST", "/inventory/copies/bulk", "dar de alta ejemplares",
+                        403, 201, 201, 201),
+                Arguments.of("POST", "/inventory/locations", "crear ubicaciones",
                         403, 201, 201, 201),
                 Arguments.of("GET", "/loans", "ver todos los prestamos",
                         403, 200, 200, 200),

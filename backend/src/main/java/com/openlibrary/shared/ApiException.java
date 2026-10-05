@@ -22,7 +22,8 @@ public class ApiException extends RuntimeException {
         super(message);
         this.status = status;
         this.code = code;
-        this.fieldErrors = fieldErrors;
+        // Callers pass null when there is nothing field-level to report.
+        this.fieldErrors = fieldErrors == null ? List.of() : List.copyOf(fieldErrors);
     }
 
     public HttpStatus status() {

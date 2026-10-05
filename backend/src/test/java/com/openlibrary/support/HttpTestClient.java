@@ -54,6 +54,22 @@ public final class HttpTestClient {
         return send(write(HttpRequest.newBuilder(uri(path)), "PATCH", body));
     }
 
+    /** Binary payload (labels, covers): a text body would mangle the bytes. */
+    public record BinaryResult(int status, byte[] bytes, String contentType) {
+    }
+
+    public BinaryResult getBytes(String path) {
+        try {
+            HttpResponse<byte[]> response = http.send(
+                    HttpRequest.newBuilder(uri(path)).GET().timeout(Duration.ofSeconds(30)).build(),
+                    HttpResponse.BodyHandlers.ofByteArray());
+            return new BinaryResult(response.statusCode(), response.body(),
+                    String.valueOf(response.headers().firstValue("content-type").orElse("")));
+        } catch (Exception e) {
+            throw new IllegalStateException("request failed: " + e, e);
+        }
+    }
+
     /** DELETE is a state-changing verb, so it needs the CSRF header like the rest. */
     public Result delete(String path) {
         return send(write(HttpRequest.newBuilder(uri(path)), "DELETE", null));

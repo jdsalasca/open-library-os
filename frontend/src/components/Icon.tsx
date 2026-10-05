@@ -15,6 +15,7 @@ const PATHS = {
     'M16 19v-1.5a3.5 3.5 0 0 0-3.5-3.5h-5A3.5 3.5 0 0 0 4 17.5V19M10 11a3.5 3.5 0 1 0 0-7 3.5 3.5 0 0 0 0 7ZM20 19v-1.5a3.5 3.5 0 0 0-2.6-3.4M15.5 4.2a3.5 3.5 0 0 1 0 6.6',
   shield: 'M12 3.5 19.5 6v5.5c0 4.2-3 7.6-7.5 9-4.5-1.4-7.5-4.8-7.5-9V6L12 3.5Z',
   catalog: 'M5 5.5h3V16H5zM10.5 3h3v13h-3zM16 7.5h3V16h-3zM3 17.5h18v2H3z',
+  barcode: 'M3 5v14M6.5 5v14M10 5v10M13.5 5v14M17 5v10',
 } as const;
 
 export type IconName = keyof typeof PATHS;

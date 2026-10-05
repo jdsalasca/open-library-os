@@ -1,0 +1,15 @@
+GET /inventory/locations
+
+[{"id":4,"code":"DEP-1","name":"Deposito","kind":"DEPOSITO","children":[],"copies":2},{"id":1,"code":"SALA-1","name":"Sala principal","kind":"SALA","children":[{"id":2,"code":"P-1","name":"Pasillo 1","kind":"PASILLO","parentId":1,"children":[{"id":3,"code":"E-1","name":"Estante 1","kind":"ESTANTE","parentId":2,"children":[],"copies":3}],"copies":3}],"copies":3}]
+
+GET /inventory/copies?size=2
+
+{"content":[{"id":1,"code":"OL-0000000001","barcode":"2000000000015","qr":"OL-0000000001","status":"DISPONIBLE","bookId":8,"bookTitle":"Cien anos de soledad","locationId":3,"locationCode":"E-1"},{"id":2,"code":"OL-0000000002","barcode":"2000000000022","qr":"OL-0000000002","status":"DISPONIBLE","bookId":8,"bookTitle":"Cien anos de soledad","locationId":3,"locationCode":"E-1"}],"page":0,"size":2,"totalElements":22,"totalPages":11}
+
+GET /inventory/lookup?code=OL-0000000001
+
+{"id":1,"code":"OL-0000000001","barcode":"2000000000015","qr":"OL-0000000001","status":"DISPONIBLE","bookId":8,"bookTitle":"Cien anos de soledad","locationId":3,"locationCode":"E-1"}
+
+GET /inventory/books
+
+[{"bookId":8,"title":"Cien anos de soledad","authors":["Gabriel Garcia Marquez"],"copies":19,"available":19},{"bookId":2,"title":"Cien años de soledad","authors":["Gabriel García Márquez"],"isbn13":"9780307474728","copies":0,"available":0},{"bookId":7,"title":"El nombre de la rosa","authors":["Umberto Eco","Jean-Claude Carrière"],"isbn13":"9788426403568","copies":0,"available":0},{"bookId":9,"title":"Ficciones","authors":["Jorge Luis Borges"],"copies":2,"available":2},{"bookId":4,"title":"Ficciones","subtitle":"Los mejores cuentos","authors":["Jorge Luis Borges"],"isbn13":"9780307950925","copies":0,"available":0},{"bookId":6,"title":"Fundamentals","subtitle":"Ten Exercises on the Ten Principles of Object-Oriented Design","authors":["Robert C. Martin"],"isbn13":"9780134494166","copies":0,"available":0},{"bookId":1,"title":"Historia del tiempo","authors":["Stephen Hawking"],"isbn13":"9780306406157","copies":0,"available":0},{"bookId":3,"title":"Neuromante","authors":["William Gibson"],"isbn13":"9788491058106","copies":0,"available":0},{"bookId":10,"title":"Rayuela","authors":["Julio Cortazar"],"copies":1,"available":1},{"bookId":5,"title":"Sapiens: De animales a dioses","subtitle":"Una breve historia de la humanidad","authors":["Yuval Noah Harari"],"isbn13":"9788499926223","copies":0,"available":0}]

@@ -110,7 +110,7 @@ búsqueda, estado vacío, detalle y formulario), salida real en `docs/evidence/r
 - Migraciones `V*.sql` inmutables una vez aplicadas (Flyway lo comprueba). Está documentado en
   el README porque romperlo impide arrancar el backend.
 
-**➡️ Siguiente:** Ronda 3 — Ejemplares e inventario.
+**➡️ Siguiente:** Ronda 4 — Préstamos, reservas y lector de código de barras.
 
 **Objetivo:** CRUD completo de libros con autores múltiples, editoriales, categorías, ISBN.
 
@@ -139,6 +139,30 @@ búsqueda, estado vacío, detalle y formulario), salida real en `docs/evidence/r
 - Tests: unicidad de códigos, asignación de ubicación, historial de movimientos.
 
 **Entregable:** cada ejemplar localizable físicamente por su código.
+
+**Estado:** `done` (2026-10-04). Backend **181 tests verdes** (18 de `CopyCodeTest` + 17 de
+`InventoryApiTest`), frontend **48 verdes**, `oxlint` 0 avisos, `tsc` limpio, 4 servicios `healthy`.
+
+- Migración **`V7__inventory.sql`** (no `V4`): `locations` (sala/pasillo/estante/depósito + `x/y/z`
+  para el mapa 3D de la ronda 6), `copies`, `copy_moves` y secuencia `copy_code_sequence`.
+  Se numera `V7` porque `V6` (ISBN) ya estaba aplicada: Flyway rechaza migraciones fuera de orden.
+- Códigos: `CopyCode` deriva un **EAN-13 interno** (`2000000000015`, dígito de control válido)
+  a partir del id de secuencia, más el código legible `OL-0000000001` que es lo que codifica el QR.
+- Etiqueta PNG por ejemplar servida por `GET /inventory/copies/{id}/label.png` con ZXing: EAN-13,
+  QR, código legible y título.
+- `GET /inventory/lookup?code=` acepta código legible o EAN-13 (cámara o scanner USB).
+- El árbol de ubicaciones **acumula los ejemplares de los descendientes**: una sala no guarda
+  ejemplares, así que sin el roll-up "Sala principal: 0" se leía como vacía junto a un estante lleno.
+- Los traslados se registran en `copy_moves` y quedan consultables por ejemplar.
+- Frontend: `frontend/src/api/inventory.ts`, `pages/Inventory.tsx` + `Inventory.scss`,
+  sección de navegación restringida a BIBLIOTECARIO/ADMINISTRATIVO/ADMINISTRADOR.
+  El lector no ve el enlace y recibe 403 en la API (matriz de permisos).
+- **Desviación documentada:** el barcode se imprime como EAN-13 y no como Code 128. El EAN-13
+  interno es el que el plan pide derivar, y es el símbolo que cualquier lector de códigos de
+  librerías sabe usar; añadir Code 128 encima del mismo dato sería un segundo símbolo redundante.
+- Capturas en `docs/screenshots/round-3/` (listado, filtro, alta masiva, códigos generados,
+  ubicaciones, etiqueta imprimible, lector sin acceso, tema oscuro, móvil) y salida real en
+  `docs/evidence/round-3/`.
 
 ---
 

@@ -1,0 +1,195 @@
+@use '../design/tokens' as t;
+@use '../design/mixins' as *;
+
+.inv__filters {
+  margin-bottom: var(--space-5);
+}
+
+.inv__search {
+  display: grid;
+  gap: var(--space-3);
+  align-items: end;
+
+  @include from(t.$bp-sm) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 1fr) minmax(0, 1fr) auto;
+  }
+}
+
+.inv__actions-cell {
+  display: flex;
+  gap: var(--space-2);
+}
+
+.inv__code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  white-space: nowrap;
+}
+
+.inv__book {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  // No min-width: on a phone a fixed floor is what pushed the status column
+  // off the right edge instead of letting the row shrink.
+  min-width: 0;
+
+  // Only the title may wrap: the barcode has to stay on one line to be
+  // copied or typed into the lookup without a line break in the middle.
+  span:first-child {
+    overflow-wrap: anywhere;
+  }
+}
+
+.inv__barcode {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+
+.inv__muted {
+  color: var(--text-muted);
+}
+
+.inv__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: var(--space-2);
+}
+
+.inv__select {
+  padding: var(--space-1) var(--space-2);
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text);
+  font-size: var(--text-sm);
+  max-width: 11rem;
+
+  @include focus-ring;
+
+  &:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+  }
+}
+
+.inv__label {
+  font-size: var(--text-sm);
+  white-space: nowrap;
+}
+
+.inv__add {
+  margin-bottom: var(--space-5);
+  border-inline-start: 3px solid var(--accent);
+}
+
+.inv__add-fields {
+  display: grid;
+  gap: var(--space-3);
+  margin-bottom: var(--space-4);
+
+  @include from(t.$bp-sm) {
+    grid-template-columns: minmax(0, 2fr) minmax(0, 6rem) minmax(0, 1fr);
+  }
+}
+
+.inv__created {
+  margin-bottom: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--success-soft);
+  color: var(--success);
+
+  p {
+    font-size: var(--text-sm);
+    font-weight: var(--weight-medium);
+  }
+
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-2);
+    margin: var(--space-2) 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  li {
+    padding: 0.1rem var(--space-2);
+    border-radius: var(--radius-sm);
+    background: var(--surface);
+    font-family: var(--font-mono);
+    font-size: var(--text-xs);
+  }
+}
+
+.inv__hint {
+  margin-top: var(--space-2);
+  color: var(--text-muted);
+  font-weight: var(--weight-regular) !important;
+}
+
+.inv__error {
+  margin-top: var(--space-4);
+  padding: var(--space-3) var(--space-4);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.inv__loc-form {
+  display: grid;
+  gap: var(--space-3);
+  align-items: end;
+  margin-bottom: var(--space-5);
+  padding-bottom: var(--space-5);
+  border-bottom: 1px solid var(--border);
+
+  @include from(t.$bp-md) {
+    grid-template-columns: repeat(4, minmax(0, 1fr)) auto;
+  }
+}
+
+.inv__tree {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+
+  li {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: var(--space-3);
+    padding: var(--space-2);
+    border-radius: var(--radius-md);
+
+    &:hover {
+      background: var(--surface-hover);
+    }
+  }
+}
+
+.inv__tree-code {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  min-width: 4rem;
+}
+
+.inv__tree-name {
+  font-weight: var(--weight-medium);
+}
+
+.inv__tree-count {
+  margin-inline-start: auto;
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}

@@ -6,6 +6,7 @@ import { useTheme } from './hooks/useTheme';
 import { BookDetail } from './pages/BookDetail';
 import { BookForm } from './pages/BookForm';
 import { Catalog } from './pages/Catalog';
+import { Inventory } from './pages/Inventory';
 import { ChangePassword } from './pages/ChangePassword';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
@@ -16,6 +17,12 @@ import { RequireRole } from './routes/guards';
 const NAV: NavItem[] = [
   { to: '/', label: 'Inicio', icon: 'book' },
   { to: '/catalogo', label: 'Catalogo', icon: 'catalog' },
+  {
+    to: '/inventario',
+    label: 'Inventario',
+    icon: 'barcode',
+    roles: ['BIBLIOTECARIO', 'ADMINISTRATIVO', 'ADMINISTRADOR'],
+  },
   {
     to: '/cuentas',
     label: 'Cuentas',
@@ -76,6 +83,8 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalogo" element={<Catalog />} />
+          <Route path="/inventario" element={<Inventory />} />
+          <Route path="/inventario" element={<Inventory />} />
           <Route path="/catalogo/nuevo" element={<BookForm />} />
           <Route path="/catalogo/:id" element={<BookDetail />} />
           <Route path="/catalogo/:id/editar" element={<BookFormRoute />} />
