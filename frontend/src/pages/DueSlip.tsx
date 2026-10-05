@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 
 import { daysLeft, dueLabel, myLibrary } from '../api/myLibrary';
+import { libraryProfile } from '../api/system';
 import { Button, EmptyState, ErrorState, LoadingState } from '../components';
 import { useAuth } from '../auth/auth-context';
 import './DueSlip.scss';
@@ -22,6 +23,11 @@ export function DueSlip() {
   // Fixed once per visit: this is the date the slip was written on, and asking
   // the clock on every render would be both impure and wrong.
   const [writtenOn] = useState(() => new Date());
+  const library = useQuery({
+    queryKey: ['library'],
+    queryFn: () => libraryProfile(),
+    retry: false,
+  });
   const mine = useQuery({ queryKey: ['my-library'], queryFn: myLibrary });
 
   if (mine.isPending) {
@@ -51,8 +57,8 @@ export function DueSlip() {
         <header className="slip__head">
           <div>
             {/* Whose slip it is: the desk takes it from a hand, not from an id. */}
-            <h1>Prestamos de {user?.fullName ?? 'este lector'}</h1>
-            <p className="slip__code">{user?.email}</p>
+<h1>Prestamos de {user?.fullName ?? 'este lector'}</h1>
+            <p className="slip__code">{library.data?.name ?? user?.email}</p>
           </div>
           <p className="slip__when">{writtenOn.toLocaleDateString('es-ES')}</p>
         </header>

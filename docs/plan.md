@@ -785,6 +785,38 @@ contenido correcto, no solo un 200.
 
 ---
 
+## Ronda 19 — Tu biblioteca se llama como tú quieras
+
+**Objetivo:** «Open Library OS» es el nombre del proyecto, no el de la biblioteca.
+Alguien que se autoaloja esto tiene una biblioteca con nombre propio, y la
+**primera pantalla que ve nunca** es la de acceso.
+
+- `GET /api/system/library` devuelve el nombre y **no pide sesión**: el formulario
+  de acceso todavía no tiene cookie. Sustituye al título del acceso y aparece en
+  el resguardo de préstamos.
+- `PUT /api/system/library/name` (`settings:manage`): nombre vacío o de más de
+  120 caracteres se rechazan con 400 en vez de truncar.
+- Si el nombre no se puede leer, la pantalla **deja entrar igual** y cae al nombre
+  del proyecto. Un nombre es decoración; no puede ser una puerta.
+
+**La otra mitad de la ronda: decidir la configuración muerta.**
+
+`inventory.barcode_prefix`, `isbn.providers` y `library.locale` las escribió
+`V1__baseline.sql` y **no las leía nadie**: el prefijo de código vive en el value
+object, la cadena de proveedores es código, y el idioma de la interfaz es fijo.
+Editar esas filas no hacía nada, que es peor que no existieran. La migración
+**`V9__drop_dead_config.sql`** las borra y explica su motivo en el propio
+fichero, que es lo que hace útil una migración.
+
+Quedan 7 claves en `app_config`, todas leídas por algo.
+
+**Estado:** `done` (2026-10-05). Backend **315 tests verdes** (6 del perfil),
+frontend **103 verdes** (21 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, V9 aplicada en la base de QA, 4
+servicios `healthy`.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);
@@ -805,9 +837,7 @@ Lo que queda por hacer, en orden de valor para quien usa la biblioteca:
    «mis días»** y quizá un resumen imprimible, no un SMTP.
 2. **CSV de vencidos para el mostrador.** Cuando hay que llamar a veinte personas
    por teléfono, una hoja imprimible ahorra la pantalla. Los datos ya existen.
-3. **Limpiar `app_config` muerto.** `inventory.barcode_prefix`, `isbn.providers`
-   y `library.locale` se leen en algunos sitios y se ignoran en otros: decidirlos
-   o borrarlos.
+3. ~~Limpiar `app_config` muerto.~~ **Hecho en la ronda 19.**
 4. **Las 187 violaciones de `markdownlint` en este mismo plan.** Cosmético, pero
    es el documento que orienta el trabajo.
 

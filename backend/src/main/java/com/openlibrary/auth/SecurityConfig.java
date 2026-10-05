@@ -63,6 +63,13 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/catalog/**").hasAuthority(Role.CATALOG_READ)
                         .requestMatchers("/catalog/**").hasAuthority(Role.CATALOG_WRITE)
 
+                        // The login screen has no session yet, so it has to be able to read the
+                        // library's name before anybody signs in.
+                        .requestMatchers(HttpMethod.GET, "/system/library").permitAll()
+                        .requestMatchers(HttpMethod.PUT, "/system/library/**")
+                        .hasAuthority(Role.SETTINGS_MANAGE)
+                        .requestMatchers("/system/**").authenticated()
+
                         .requestMatchers("/inventory/**").hasAuthority(Role.INVENTORY_WRITE)
 
                         // Order matters and is the whole point of matching by URL: a reader manages

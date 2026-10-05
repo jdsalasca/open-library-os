@@ -1,12 +1,18 @@
 import { useState } from 'react';
+import { useQuery } from '@tanstack/react-query';
 import { Navigate, useLocation, useNavigate } from 'react-router-dom';
 
 import { Button, Card, CardBody, ErrorState, Field } from '../components';
 import { useAuth } from '../auth/auth-context';
 import { ApiError } from '../api/client';
+import { libraryProfile } from '../api/system';
 import './Login.scss';
 
 export function Login() {
+  // The library's own name. Decoration, never a gate: if it cannot be read
+  // the form still works and falls back to the project name.
+  const name = useQuery({ queryKey: ['library'], queryFn: () => libraryProfile(), retry: false });
+
   const { user, login } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
@@ -42,7 +48,7 @@ export function Login() {
           <div className="login__brand">
             <span className="login__mark" aria-hidden="true" />
             <div>
-              <h1 className="login__title">Open Library OS</h1>
+              <h1 className="login__title">{name.data?.name ?? 'Open Library OS'}</h1>
               <p className="login__lead">Gestion de librerias autoalojada</p>
             </div>
           </div>
