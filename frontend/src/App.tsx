@@ -9,6 +9,7 @@ import { Catalog } from './pages/Catalog';
 import { Inventory } from './pages/Inventory';
 import { LibraryMap } from './pages/LibraryMap';
 import { MyLibrary_ } from './pages/MyLibrary';
+import { DueSlip } from './pages/DueSlip';
 import { Settings } from './pages/Settings';
 import { Loans } from './pages/Loans';
 import { ChangePassword } from './pages/ChangePassword';
@@ -125,6 +126,8 @@ export default function App() {
           />
           <Route path="/mapa" element={<LibraryMap />} />
           <Route path="/mi-biblioteca" element={<MyLibrary_ />} />
+          {/* The slip a reader hands over at the desk, with the copy codes. */}
+          <Route path="/mi-biblioteca/resguardo" element={<DueSlip />} />
           <Route path="/catalogo/nuevo" element={<BookForm />} />
           <Route path="/catalogo/:id" element={<BookDetail />} />
           <Route path="/catalogo/:id/editar" element={<BookFormRoute />} />

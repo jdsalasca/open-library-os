@@ -715,6 +715,42 @@ serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 5 capturas en
 
 ---
 
+## Ronda 17 — El resguardo que el lector lleva al mostrador
+
+**Objetivo:** la app no manda correos a propósito: sin cuentas, sin servicios
+externos, sin terceros. Pero eso deja un agujero real: un lector con un libro
+vencido no puede renovarlo (`LoanPolicy` lo impide, y con razón) y **nadie se lo
+dice**. Solo puede enterarse si abre la aplicación.
+
+- `/mi-biblioteca/resguardo`: el papel que el lector entrega en el mostrador.
+  Nombre y correo arriba (el mostrador lo recibe de una mano, no de un id), cada
+  libro con su **código de ejemplar** en monoespaciado para escanear o teclear,
+  y la fecha de devolución con «Quedan 28 días» o «Venció hace 6 días».
+- Si hay algo vencido, el aviso va **en rojo y en días**, no como «1 de 2»: los
+  días son el número que se discute en el mostrador, el recuento no.
+- Es una pantalla primero y una impresión después (`@media print` quita la
+  barra y los bordes). Un resguardo que no se puede leer en el móvil no lo abre
+  nadie.
+- Botón «Resguardo para el mostrador» en Mi biblioteca, solo cuando hay algo
+  prestado.
+
+**Sinceridad sobre el alcance:** esto **no avisa**. Es la pieza que hace posible
+avisar: sin correo ni SMS no hay forma de empujar un aviso, y decirlo de otro
+modo sería vender humo. Lo que sí cierra es el círculo — el lector ve lo que debe
+y el mostrador lo escanea de vuelta— y deja ellistado del CSV para avisos de
+masiva.
+
+- oxlint señaló `new Date()` en el render (segunda vez que aparece). La fecha del
+  resguardo se fija **una vez al montar** con `useState(() => new Date())`: es la
+  fecha en que se escribió, no la de cada render.
+
+**Estado:** `done` (2026-10-05). Backend **301 tests verdes**, frontend **99
+verdes** (19 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 5 capturas en
+`docs/screenshots/round-17/` (incluida la emulación de impresión).
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

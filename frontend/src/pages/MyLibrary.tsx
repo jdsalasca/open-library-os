@@ -1,3 +1,4 @@
+import { Link } from 'react-router-dom';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from '../api/client';
@@ -49,10 +50,17 @@ export function MyLibrary_() {
 
   return (
     <div className="mine">
-      <PageHead
+<PageHead
         eyebrow="Mi biblioteca"
         title={user?.fullName ? `Hola, ${user.fullName.split(' ')[0]}` : 'Mi biblioteca'}
         lead="Lo que tienes prestado, lo que has devuelto y lo que estas esperando."
+        actions={
+          loans.length > 0 ? (
+            <Link className="mine__slip-link" to="/mi-biblioteca/resguardo">
+              Resguardo para el mostrador
+            </Link>
+          ) : undefined
+        }
       />
 
       {mine.isPending && <LoadingState label="Cargando tu biblioteca" rows={5} />}
