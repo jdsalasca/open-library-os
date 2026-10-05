@@ -67,6 +67,23 @@ public final class LoanDtos {
             int overdue) {
     }
 
+    /** Someone who is late, as the desk needs them: who to call and by how much. */
+    public record UrgentLoan(
+            String readerName,
+            String readerEmail,
+            String bookTitle,
+            int daysLate) {
+    }
+
+    /** The first screen's numbers, for staff. */
+    public record Dashboard(
+            int out,
+            int overdue,
+            int dueToday,
+            int available,
+            List<UrgentLoan> urgent) {
+    }
+
     /** Everything a card holder sees about themselves. */
     public record MyLibrary(
             List<LoanSummary> loans,

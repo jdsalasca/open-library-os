@@ -1,0 +1,3 @@
+auditoria axe (2 roles x 2 temas x 9 pantallas)
+0 violaciones criticas ni serias
+informe: axe-report.json

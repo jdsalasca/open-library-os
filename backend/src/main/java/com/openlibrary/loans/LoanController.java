@@ -62,6 +62,15 @@ public class LoanController {
      * The reader lookup behind the desk's quick-loan box. Staff only: a card
      * holder has no business listing other people's accounts.
      */
+    /**
+     * The numbers behind the first screen. Staff only: it counts other people's
+     * debts, so a card holder has no business here.
+     */
+    @GetMapping("/dashboard")
+    public LoanDtos.Dashboard dashboard() {
+        return loans.dashboard();
+    }
+
     @GetMapping("/readers")
     public List<LoanDtos.DeskReader> readers(@RequestParam(required = false) String q) {
         return loans.searchReaders(q);

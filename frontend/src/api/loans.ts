@@ -49,6 +49,26 @@ export function listLoans(
   return api.get<Page<Loan>>(`/loans${queryString(query)}`);
 }
 
+export interface UrgentLoan {
+  readerName: string;
+  readerEmail: string;
+  bookTitle: string;
+  daysLate: number;
+}
+
+export interface Dashboard {
+  out: number;
+  overdue: number;
+  dueToday: number;
+  available: number;
+  urgent: UrgentLoan[];
+}
+
+/** Staff only. The numbers behind the first screen. */
+export function loanDashboard() {
+  return api.get<Dashboard>('/loans/dashboard');
+}
+
 export interface DeskReader {
   id: number;
   email: string;

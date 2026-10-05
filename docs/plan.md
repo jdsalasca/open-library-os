@@ -518,6 +518,45 @@ sesión resistente al reinicio, 4 servicios `healthy`.
 
 ---
 
+## Ronda 12 — Inicio: qué hay que hacer hoy
+
+**Objetivo:** la primera pantalla de la aplicación saludaba con el estado de la
+base de datos y una lista de **las rondas 2 a 6, todas ya terminadas**. Era un
+resto de desarrollo servido como interfaz, idéntico para los cuatro roles. Para
+una persona que abre la app a las nueve de la mañana, valor cero.
+
+- `GET /loans/dashboard` (solo quien tenga `loans:operate`): cuatro números en una
+  consulta — fuera, vencidos, para hoy, en estantería — y los **6 más atrasados**
+  con nombre, correo y días de retraso. La lista se corta a propósito: una
+  pantalla con cincuenta deudas es una pantalla que nadie lee.
+- Inicio saluda por el nombre y la hora («Buenos días, Ana»), y el panel va
+  primero. El estado del stack pasa a ser la nota al pie que siempre fue.
+- Un LECTOR no recibe ni los números ni la lista: ve «Tu rincón» con el camino a
+  Mi biblioteca y al mapa. El `403` del backend y el `enabled` del cliente
+  coinciden; el test lo comprueba por los dos lados.
+
+**Dos cosas que el trabajo destapa:**
+
+- `current_date - l.due_at::date` devuelve los días directamente. Lo primero fue
+  `(intervalo)::int`, que Postgres **no** puede castear: 500 en toda la pantalla.
+- El montón de deudas se construye prestando bien y envejecendo los préstamos
+  después, porque la política (muy razonablemente) no presta a quien ya está
+  atrasado. El primer intento del test fallaba con 409 y no era el bug: era la
+  regla funcionando.
+
+**Estado:** `done` (2026-10-05). Backend **274 tests verdes** (7 del panel),
+frontend **79 verdes** (14 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, 4 servicios `healthy`, 4 capturas en
+`docs/screenshots/round-12/`.
+
+- Un test dependía del orden: `ReaderSearchApiTest` buscaba «bruno» y el nuevo
+  `DashboardApiTest` dejaba un Brunoeseed en la misma base. Ahora busca el correo
+  propio, que es lo que el test quiere comprobar.
+- `screenshot-home.mjs` **no inventa estado**: para ver la lista de vencidos hay
+  que envejecer un préstamo a mano, y el propio script lo dice en su cabecera.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

@@ -167,7 +167,9 @@ class ReaderSearchApiTest extends PostgresTest {
     void doesNotOfferDeactivatedAccounts() {
         jdbc.update("update users set active = false where email = ?", BRUNO_EMAIL);
 
-        assertThat(librarian.get("/loans/readers?q=bruno").json()).isEmpty();
+        // Search this account's own address: another Bruno in a shared test
+        // database is not what this test is about.
+        assertThat(librarian.get("/loans/readers?q=" + BRUNO_EMAIL).json()).isEmpty();
     }
 
     @Test

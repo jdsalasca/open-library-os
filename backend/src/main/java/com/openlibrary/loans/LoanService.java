@@ -321,6 +321,54 @@ public class LoanService {
         return "translate(lower(" + column + "), '" + FOLD_FROM + "', '" + FOLD_TO + "')";
     }
 
+    /**
+     * What needs doing today, in one call.
+     *
+     * <p>The first screen used to say the database was up. A librarian needs to
+     * know who is late, what is due back today and what is on the shelf, so the
+     * counts come straight out of one query instead of the browser pulling whole
+     * pages of loans to add them up.
+     *
+     * <p>The urgent list is deliberately short: a screen with fifty debts is a
+     * screen nobody reads.
+     */
+    @Transactional(readOnly = true)
+    public LoanDtos.Dashboard dashboard() {
+        var start = java.sql.Timestamp.from(startOfToday());
+        var tomorrow = java.sql.Timestamp.from(startOfToday().plus(Duration.ofDays(1)));
+
+        Integer out = jdbc.queryForObject(
+                "select count(*) from loans where returned_at is null", Integer.class);
+        Integer overdue = jdbc.queryForObject("""
+                select count(*) from loans
+                where returned_at is null and due_at < ?
+                """, Integer.class, start);
+        Integer dueToday = jdbc.queryForObject("""
+                select count(*) from loans
+                where returned_at is null and due_at >= ? and due_at < ?
+                """, Integer.class, start, tomorrow);
+        Integer available = jdbc.queryForObject(
+                "select count(*) from copies where status = 'DISPONIBLE'", Integer.class);
+
+        var urgent = jdbc.query("""
+                select u.full_name, u.email, b.title, l.due_at,
+                       greatest(0, current_date - l.due_at::date) as days_late
+                from loans l
+                join users u on u.id = l.user_id
+                join copies c on c.id = l.copy_id
+                join books b on b.id = c.book_id
+                where l.returned_at is null and l.due_at < ?
+                order by l.due_at
+                limit 6
+                """,
+                (rs, n) -> new LoanDtos.UrgentLoan(
+                        rs.getString("full_name"), rs.getString("email"),
+                        rs.getString("title"), rs.getInt("days_late")),
+                start);
+
+        return new LoanDtos.Dashboard(out, overdue, dueToday, available, urgent);
+    }
+
     @Transactional(readOnly = true)
     public List<LoanDtos.ReservationSummary> myReservations() {
         return reservations.findByUser(caller.id()).stream()
