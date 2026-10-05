@@ -1,4 +1,5 @@
 import { PageHead } from '../components';
+import { BackupCard } from '../components/BackupCard';
 import { LoanSettings } from '../components/LoanSettings';
 import { LibraryData } from './DataTransfer';
 import './Settings.scss';
@@ -20,6 +21,7 @@ export function Settings() {
         lead="Como presta esta biblioteca, y donde estan tus datos. Sin tocar el servidor."
       />
       <LoanSettings />
+      <BackupCard />
       <LibraryData embedded />
     </div>
   );

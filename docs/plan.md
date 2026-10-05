@@ -817,6 +817,44 @@ servicios `healthy`.
 
 ---
 
+## Ronda 20 — ¿Están mis respaldos? Sin leer logs
+
+**Objetivo:** esta aplicación vende que tus datos son tuyos y sobreviven. La
+pregunta que tiene que responder quien la opera («¿sigue siendo verdad?») solo se
+podía contestar con `docker compose logs backup`. Y `backup:manage` protegía un
+`/backup/**` que no existía: un permiso que no protege nada.
+
+- El contenedor `backup` ya escribía un marcador `.last-ok` con la hora del último
+  volcado validado, y su healthcheck depende de él. El backend monta ese volumen
+  **en solo lectura** (`backups:/backups:ro`) y lo lee.
+- GET /backup/status (ackup:manage): si esta al dia, cuantos ficheros hay,
+  el nombre y tamano del mas reciente, y **la edad en horas**. Tres estados
+  claros: nunca se ha hecho, el marcador existe pero su volcado ya no, o tiene
+  mas de 48 h.
+- Tarjeta en Ajustes, con el aviso en rojo cuando algo va mal, y el
+  recordatorio de que restaurar se comprueba con scripts/verify-restore.sh.
+**Lo que este servicio deliberadamente NO hace:** lanzar un `pg_dump`. Un botón
+que ejecutes `pg_dump` desde la aplicación sería **una manera de perder datos**
+—una segunda ruta hacia la base, con su propia superficie— y no una de
+mantenerlos. Hacer respaldos es del contenedor; restaurar y comprobar es del
+script.
+
+**Sobre los permisos, una corrección de las expectativas del test:**
+
+El test daba 403 a ADMINISTRATIVO porque me lo había inventado. El código ya lo
+decía bien desde la ronda 1: *«el personal administrativo es dueño de los datos»*
+
+y por eso tiene ackup:manage. LECTOR y BIBLIOTECARIO quedan fuera, que es lo
+correcto: no tienen por qué contar las copias de seguridad de nadie.
+
+**Estado:** `done` (2026-10-05). Backend **320 tests verdes** (5 del estado),
+frontend **107 verdes** (22 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, sesión resistente al reinicio, 4
+servicios `healthy`. Comprobado contra los **6 volcados reales** del volumen de
+QA, no contra un mock: «Respaldos al día: 6 guardados, el último hace 22 h».
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

@@ -45,6 +45,11 @@ services:
     depends_on:
       db:
         condition: service_healthy
+    volumes:
+      # Read-only: the app only reports what the backup container has written, so
+      # the owner can check their backups without reading container logs. Nothing
+      # in the application writes here or deletes a dump.
+      - backups:/backups:ro
     expose:
       - "8080"
     stop_grace_period: 20s
