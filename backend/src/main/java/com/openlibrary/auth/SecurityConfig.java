@@ -73,6 +73,10 @@ public class SecurityConfig {
                         .requestMatchers("/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/reservations/**").authenticated()
 
+                        // The map is how a reader finds a book on a phone, so it is
+                        // open to any signed-in account; stocking shelves is not.
+                        .requestMatchers(HttpMethod.GET, "/map").authenticated()
+
                         .requestMatchers(HttpMethod.PATCH, "/users/*/role").hasAuthority(Role.USERS_ROLES)
                         .requestMatchers(HttpMethod.GET, "/users/**").hasAuthority(Role.USERS_READ)
                         .requestMatchers("/users/**").hasAuthority(Role.USERS_WRITE)

@@ -85,8 +85,9 @@ public class InventoryService {
         }
         requireValidParent(body.kind(), body.parentId());
 
-        Location saved = locations.save(new Location(
-                body.code().trim(), body.name().trim(), body.kind(), body.parentId()));
+        var location = new Location(body.code().trim(), body.name().trim(), body.kind(), body.parentId());
+        location.placeAt(body.x(), body.y(), body.z(), body.width(), body.depth(), body.height());
+        Location saved = locations.save(location);
         audit.record(caller.id(), "location.created", "location", saved.getId(),
                 Map.of("code", saved.getCode()));
 

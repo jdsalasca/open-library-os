@@ -110,7 +110,7 @@ búsqueda, estado vacío, detalle y formulario), salida real en `docs/evidence/r
 - Migraciones `V*.sql` inmutables una vez aplicadas (Flyway lo comprueba). Está documentado en
   el README porque romperlo impide arrancar el backend.
 
-**➡️ Siguiente:** Ronda 6 — Mapa 3D navegable mobile-first.
+**➡️ Siguiente:** Ronda 7 — Resiliencia, backups, export/import y cierre.
 
 **Objetivo:** CRUD completo de libros con autores múltiples, editoriales, categorías, ISBN.
 
@@ -268,6 +268,35 @@ en [`docs/evidence/round-5/`](evidence/round-5/).
 - Tests: endpoint (contrato), componentes de escena con mock de WebGL, fallback sin WebGL.
 
 **Entregable:** localizar un ejemplar concreto en el mapa desde un móvil.
+
+**Estado:** `done` (2026-10-04). Backend **226 tests verdes** (7 de `MapApiTest`), frontend **65
+verdes** (14 de `map.test.ts`), `oxlint` 0 avisos, `tsc` limpio, 4 servicios `healthy`.
+
+- `GET /api/map` devuelve **todo en una llamada**: límites del plano, y por nodo geometría
+  (x/y/z + width/depth/height), número de ejemplares, ocupación por estado y los ejemplares que
+  contiene. Un solo request porque el mapa se dibuja en el teléfono y cada ida a la red se nota.
+- **La geometría se resuelve en el servidor.** x/y/z son nullables a propósito (una biblioteca
+  registra sus estantes antes de que nadie mida la sala) y lo que falta se coloca con un
+  despliegue automático, de modo que todos los clientes dibujan el mismo plano y nunca sale vacío.
+- La API de ubicaciones ahora **persiste** la geometría que se le enviaba y la descartaba.
+- El mapa es de lectura, así que `GET /map` lo puede ver cualquier sesión; los lectores son
+  precisamente quien lleva el teléfono en la biblioteca. Abastecer estantes sigue siendo del
+  personal (`/inventory/**`).
+- **Desviación documentada:** el plan pedía `@react-three/fiber`. La escena se hace con
+  `perspective` + `rotateX/rotateZ` en CSS, sin dependencias nuevas: para un plano de planta son
+  unos metros y unas cajas, y sale más ligero, no hay WebGL que falle ni que probear con mocks, y
+  la   lista gemela accesible es la misma información en texto. Si algún día hace falta rotación y zoom
+  libres con cámara propia, el contrato del endpoint ya está.
+- Accesibilidad: la lista gemela es la interfaz primaria, el `prefers-reduced-motion` quita la
+  transición (comprobado por el script) y la selección encadenada sala → pasillo → estante →
+  libro → ejemplar se puede hacer entera sin tocar el plano.
+- Tres bugs encontrados por las capturas y cubiertos con test: `pathTo` entraba en bucle
+  infinito con un ciclo de padres (hubiera colgado la pestaña), el suelo de la sala tapaba los
+  estantes que estaban encima, y el plano empujaba la página 272px de lado en móvil.
+- El script de capturas **falla si** el plano no está en 3D, si no cabe en el escenario, si un
+  estante queda tapado, si un nodo es demasiado pequeño para el dedo o si la página desborda.
+- Capturas en `docs/screenshots/round-6/` (general, ocupación, estante seleccionado, pasillo,
+  oscuro, móvil, móvil con ejemplares y sin animación) y salida real en `docs/evidence/round-6/`.
 
 ---
 

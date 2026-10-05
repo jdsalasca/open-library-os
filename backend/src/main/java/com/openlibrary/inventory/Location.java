@@ -71,6 +71,22 @@ public class Location {
         this.updatedAt = Instant.now();
     }
 
+    /**
+     * Where this node stands, in metres from the entrance. All six values are
+     * nullable on purpose: a library registers its shelves before anyone measures
+     * the room, and the map lays out whatever is missing.
+     */
+    public void placeAt(BigDecimal x, BigDecimal y, BigDecimal z,
+                        BigDecimal width, BigDecimal depth, BigDecimal height) {
+        this.x = x;
+        this.y = y;
+        this.z = z;
+        this.width = width;
+        this.depth = depth;
+        this.height = height;
+        this.updatedAt = Instant.now();
+    }
+
     public Long getId() {
         return id;
     }

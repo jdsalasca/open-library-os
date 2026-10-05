@@ -7,6 +7,7 @@ import { BookDetail } from './pages/BookDetail';
 import { BookForm } from './pages/BookForm';
 import { Catalog } from './pages/Catalog';
 import { Inventory } from './pages/Inventory';
+import { LibraryMap } from './pages/LibraryMap';
 import { Loans } from './pages/Loans';
 import { ChangePassword } from './pages/ChangePassword';
 import { Home } from './pages/Home';
@@ -23,6 +24,11 @@ const NAV: NavItem[] = [
     label: 'Inventario',
     icon: 'barcode',
     roles: ['BIBLIOTECARIO', 'ADMINISTRATIVO', 'ADMINISTRADOR'],
+  },
+  {
+    to: '/mapa',
+    label: 'Mapa',
+    icon: 'map',
   },
   {
     to: '/prestamos',
@@ -92,6 +98,7 @@ export default function App() {
           <Route path="/catalogo" element={<Catalog />} />
           <Route path="/inventario" element={<Inventory />} />
           <Route path="/prestamos" element={<Loans />} />
+          <Route path="/mapa" element={<LibraryMap />} />
           <Route path="/catalogo/nuevo" element={<BookForm />} />
           <Route path="/catalogo/:id" element={<BookDetail />} />
           <Route path="/catalogo/:id/editar" element={<BookFormRoute />} />

@@ -1,0 +1,23 @@
+GET /api/map
+bounds: w=19.6 d=10 nodes=9
+
+
+code   kind        x    y    z width depth height copies
+----   ----        -    -    - ----- ----- ------ ------
+DEP-1  DEPOSITO 1,00 0,00 0,00  5,00  1,60   2,60      0
+E-1    ESTANTE  1,00 0,00 2,40  1,60  0,70   1,90      9
+E-2    ESTANTE  3,20 0,00 2,40  1,60  0,70   1,90     11
+E-3    ESTANTE  5,40 0,00 2,40  1,60  0,70   1,90     13
+E-4    ESTANTE  7,60 0,00 2,40  1,60  0,70   1,90      5
+E-5    ESTANTE  9,80 0,00 2,40  1,60  0,70   1,90      6
+P-1    PASILLO  1,00 0,00 2,00 12,00  2,20   2,40      0
+P-2    PASILLO  1,00 0,00 6,50 12,00  2,20   2,40      0
+SALA-1 SALA     6,60 0,00 0,00 14,00 10,00   3,20      0
+
+
+ocupacion por estante:
+  E-1: {"DISPONIBLE":9} items=9
+  E-2: {"DISPONIBLE":11} items=11
+  E-3: {"DISPONIBLE":13} items=13
+  E-4: {"DISPONIBLE":5} items=5
+  E-5: {"DISPONIBLE":6} items=6
