@@ -36,6 +36,7 @@ import {
 } from '../components';
 import type { Copy, LocationNode } from '../api/inventory';
 import { useAuth } from '../auth/auth-context';
+import { LayoutEditor } from '../components/LayoutEditor';
 import './Inventory.scss';
 
 const SIZE = 20;
@@ -289,11 +290,14 @@ export function Inventory() {
       )}
 
       {canWrite && (
-        <Locations
-          locations={locations.data}
-          shelves={shelves}
-          onChanged={refresh}
-        />
+        <>
+          <LayoutEditor />
+          <Locations
+            locations={locations.data}
+            shelves={shelves}
+            onChanged={refresh}
+          />
+        </>
       )}
     </div>
   );

@@ -75,7 +75,10 @@ public class InventoryService {
                 + copies.countByLocationId(location.getId());
         return new InventoryDtos.LocationSummary(
                 location.getId(), location.getCode(), location.getName(), location.getKind(),
-                location.getParentId(), kids, total);
+                location.getParentId(),
+                location.getX(), location.getY(), location.getZ(),
+                location.getWidth(), location.getDepth(), location.getHeight(),
+                kids, total);
     }
 
     @Transactional
@@ -115,6 +118,10 @@ public class InventoryService {
         }
 
         location.rename(body.name().trim());
+        // The geometry used to be accepted and thrown away, so a shelf could be
+        // created in place but never moved afterwards.
+        location.placeAt(body.x(), body.y(), body.z(),
+                body.width(), body.depth(), body.height());
         audit.record(caller.id(), "location.updated", "location", id, Map.of());
         return toTree(location, Map.of());
     }

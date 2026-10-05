@@ -40,6 +40,13 @@ export type LocationNode = {
   name: string;
   kind: LocationKind;
   parentId?: number;
+  /** Absent means not placed yet, which is not the same as standing at the origin. */
+  x?: number;
+  y?: number;
+  z?: number;
+  width?: number;
+  depth?: number;
+  height?: number;
   children: LocationNode[];
   copies: number;
 };
@@ -123,6 +130,19 @@ export function createLocation(input: {
   parentId?: number;
 }) {
   return api.post<LocationNode>('/inventory/locations', input);
+}
+
+export function updateLocation(input: {
+  id: number;
+  code: string;
+  name: string;
+  kind: LocationKind;
+  x?: number | null;
+  z?: number | null;
+  width?: number;
+  depth?: number;
+}) {
+  return api.put<LocationNode>(`/inventory/locations/${input.id}`, input);
 }
 
 export function deleteLocation(id: number) {

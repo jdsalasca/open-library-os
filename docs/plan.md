@@ -684,6 +684,37 @@ serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 6 capturas en
 
 ---
 
+## Ronda 16 — Colocar las estanterías desde el navegador
+
+**Objetivo:** el mapa 3D dibuja la geometría que hay en la base de datos, y esa
+geometría **no tenía ninguna puerta de entrada**: una instalación nueva se
+quedaba con el mapa vacio y la unica forma de colocar una estanteria era
+llamar a la API a mano. Toda una ronda de trabajo (la 6) servia de adorno.
+
+- `LocationSummary` devuelve ahora `x/y/z/width/depth/height`. Un editor que
+  tiene que pedir las coordenadas por separado es un editor que nadie usa.
+- LayoutEditor en Inventario: la lista de estanterias con donde esta cada una
+  y cuantos ejemplares guarda, dos campos para X y Z en metros, y nada de rangos
+  imposibles (mas de 1000 m es una errata, no una coordenada).
+
+**El bug que llevaba dos rondas escondido:**
+
+`updateLocation` **aceptaba la geometría y la tiraba**: solo renombraba. Se
+podian crear una estanteria ya colocada, pero **moverla despues no hacia
+nada**, y la API respondia 200 como si si. Solo se noto al leer el
+servicio entero en vez de fiarse de que el PUT existia.
+
+- `@DecimalMin("-1000")` sin máximo: una estantería de 5000 m pasaba el filtro.
+- El proyecto **omite los nulos** en JSON, así que «sin colocar» y «en el origen»
+  no son lo mismo. El test lo fija: una coordenada ausente se queda ausente.
+
+**Estado:** `done` (2026-10-05). Backend **301 tests verdes** (5 de geometría),
+frontend **95 verdes** (18 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 5 capturas en
+`docs/screenshots/round-16/` (la última es el mapa con estanterías colocadas).
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

@@ -1,5 +1,6 @@
 package com.openlibrary.inventory;
 
+import jakarta.validation.constraints.DecimalMax;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
@@ -22,23 +23,37 @@ public final class InventoryDtos {
             @NotNull LocationKind kind,
             Long parentId,
             Integer sortOrder,
-            @DecimalMin("-1000") BigDecimal x,
-            @DecimalMin("-1000") BigDecimal y,
-            @DecimalMin("-1000") BigDecimal z,
+            @DecimalMin("-1000") @DecimalMax("1000") BigDecimal x,
+            @DecimalMin("-1000") @DecimalMax("1000") BigDecimal y,
+            @DecimalMin("-1000") @DecimalMax("1000") BigDecimal z,
             @DecimalMin("0") BigDecimal width,
             @DecimalMin("0") BigDecimal depth,
             @DecimalMin("0") BigDecimal height) {
     }
 
-    public record LocationSummary(
-            Long id,
-            String code,
-            String name,
-            LocationKind kind,
-            Long parentId,
-            List<LocationSummary> children,
-            long copies) {
-    }
+/**
+ * A place in the building, with where it stands.
+ *
+ * <p>The geometry is what the 3D map draws, so it travels with the node: an
+ * editor that has to ask for the coordinates separately is an editor nobody
+ * uses. A missing coordinate means "not placed yet", which is not the same as
+ * standing at the origin.
+ */
+public record LocationSummary(
+   Long id,
+   String code,
+   String name,
+   LocationKind kind,
+   Long parentId,
+   java.math.BigDecimal x,
+   java.math.BigDecimal y,
+   java.math.BigDecimal z,
+   java.math.BigDecimal width,
+   java.math.BigDecimal depth,
+   java.math.BigDecimal height,
+   List<LocationSummary> children,
+   long copies) {
+}
 
     public record CreateCopiesRequest(
             @NotNull Long bookId,
