@@ -8,6 +8,7 @@ import { BookForm } from './pages/BookForm';
 import { Catalog } from './pages/Catalog';
 import { Inventory } from './pages/Inventory';
 import { LibraryMap } from './pages/LibraryMap';
+import { MyLibrary_ } from './pages/MyLibrary';
 import { Loans } from './pages/Loans';
 import { ChangePassword } from './pages/ChangePassword';
 import { Home } from './pages/Home';
@@ -19,6 +20,7 @@ import { RequireRole } from './routes/guards';
 const NAV: NavItem[] = [
   { to: '/', label: 'Inicio', icon: 'book' },
   { to: '/catalogo', label: 'Catalogo', icon: 'catalog' },
+  { to: '/mi-biblioteca', label: 'Mi biblioteca', icon: 'loans' },
   {
     to: '/inventario',
     label: 'Inventario',
@@ -99,6 +101,7 @@ export default function App() {
           <Route path="/inventario" element={<Inventory />} />
           <Route path="/prestamos" element={<Loans />} />
           <Route path="/mapa" element={<LibraryMap />} />
+          <Route path="/mi-biblioteca" element={<MyLibrary_ />} />
           <Route path="/catalogo/nuevo" element={<BookForm />} />
           <Route path="/catalogo/:id" element={<BookDetail />} />
           <Route path="/catalogo/:id/editar" element={<BookFormRoute />} />

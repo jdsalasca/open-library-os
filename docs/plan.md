@@ -365,6 +365,36 @@ existen) y Flyway rechaza migraciones fuera de orden aunque el número esté lib
 
 ---
 
+## Ronda 8 — El rincón del lector
+
+**Objetivo:** que quien tiene el carnet pueda ver y managear sus préstamos y sus reservas. Estaba
+prometido en la ronda 4 ("mis préstamos, reservas") y no existía: el backend no exponía nada al lector
+y no había ninguna pantalla suya.
+
+- `GET /loans/mine` devuelve en una llamada lo que tiene prestado, lo que ha devuelto y sus reservas
+  con **puesto en la cola** y si el libro está ya en la estantería. El lector sale de la sesión, nunca
+  de la petición.
+- Cancelar una reserva ajena responde **404**, no 403: el lector no tiene por qué saber que existe.
+- Regla nueva: **no se reserva un libro que ya está en la estantería** (`book_available`). Una entrada
+  en la cola bloquea el préstamo de ese ejemplar a cualquier otro lector, así que se le manda al
+  mostrador en vez de dejarle esperando un libro que ya puede coger.
+- Pantalla `/mi-biblioteca` para todo el que tenga sesión, con la navegación limitada por rol: el
+  lector ve Inicio, Catálogo, Mi biblioteca y Mapa, y nada del mostrador.
+- Botón **Reservar** en la ficha de libro, que explica el rechazo en lugar de dejar un identificador
+  en pantalla.
+- Las fechas se leen en palabras ("Quedan 14 días", "Vence mañana") y se ponen en ámbar a tres días
+  y en rojo al vencerse, contando **días completos**.
+
+**Estado:** `done` (2026-10-05). Backend **255 tests verdes** (10 de `MyLibraryApiTest`), frontend
+**70 verdes**, `oxlint` 0 avisos, `tsc` limpio, 4 servicios `healthy`.
+
+- Al añadir la regla de "no reservar lo que está disponible" hubo que corregir dos tests de la ronda 4
+  que reservaban con ejemplares en la estantería: montaban una situación imposible.
+- Capturas en `docs/screenshots/round-8/` (préstamos, ficha con reserva ya hecha, reserva rechazada
+  con su motivo, cola, oscuro y móvil) y salida real en `docs/evidence/round-8/`.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

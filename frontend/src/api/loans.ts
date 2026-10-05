@@ -91,3 +91,10 @@ export const REFUSAL_TEXT: Record<string, string> = {
   loan_overdue: 'El prestamo esta vencido: hay que devolverlo',
   loan_not_active: 'Ese prestamo ya esta cerrado',
 };
+
+/** Why a reservation did not happen, in the reader's own language. */
+export const RESERVE_TEXT: Record<string, string> = {
+  book_available: 'Ya hay un ejemplar en la estanteria: pidelo en el mostrador',
+  already_has_the_book: 'Ya tienes este libro prestado',
+  already_reserved: 'Ya estas en la cola de este libro',
+};

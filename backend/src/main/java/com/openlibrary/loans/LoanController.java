@@ -63,6 +63,16 @@ public class LoanController {
         return loans.settingsSummary();
     }
 
+    /**
+     * The reader's own corner. It has to be declared before the staff-wide
+     * {@code GET /loans/**} rule, otherwise a card holder gets a 403 for asking
+     * about their own books.
+     */
+    @GetMapping("/mine")
+    public LoanDtos.MyLibrary mine() {
+        return loans.myLibrary();
+    }
+
     /** Only ever the caller's own queue; the service reads the id from the session. */
     @GetMapping("/reservations")
     public List<LoanDtos.ReservationSummary> myReservations() {

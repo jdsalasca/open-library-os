@@ -173,10 +173,14 @@ class LoanApiTest extends PostgresTest {
     void refusesWhenSomebodyElseIsWaitingForTheBook() {
         stockCopies(2);
         long copyId = firstCopyId();
+        // A busy evening: the shelf is empty, so a reader reserves. Then a copy
+        // comes back and the desk cannot lend it to somebody who is not waiting.
+        lendEveryCopy();
         var victim = signedInAs(DemoUsers.VICTIM_EMAIL, DemoUsers.VICTIM_PASSWORD);
         assertThat(victim.post("/loans/reservations", Map.of("bookId", bookId)).status())
                 .isEqualTo(201);
 
+        returnCopy(copyId);
         var refused = librarian.post("/loans", Map.of("copyId", copyId, "readerId", readerId));
 
         assertThat(refused.status()).isEqualTo(409);
@@ -187,16 +191,37 @@ class LoanApiTest extends PostgresTest {
     void lendingToTheReaderWhoWasWaitingClosesTheirReservation() {
         stockCopies(2);
         long copyId = firstCopyId();
+        lendEveryCopy();
         var waiting = signedInAs(DemoUsers.VICTIM_EMAIL, DemoUsers.VICTIM_PASSWORD);
         long waitingId = idOf(waiting, DemoUsers.VICTIM_EMAIL);
-        waiting.post("/loans/reservations", Map.of("bookId", bookId));
+        assertThat(waiting.post("/loans/reservations", Map.of("bookId", bookId)).status())
+                .isEqualTo(201);
 
+        returnCopy(copyId);
         var loan = librarian.post("/loans", Map.of("copyId", copyId, "readerId", waitingId));
 
         assertThat(loan.status()).as("borrow: %s", loan.body()).isEqualTo(201);
         Integer open = jdbc.queryForObject(
                 "select count(*) from reservations where fulfilled_at is null", Integer.class);
         assertThat(open).isZero();
+    }
+
+    /**
+     * Empties the shelf. The copies go to {@code readerId} on purpose: the reader
+     * who waits in the queue cannot be the one holding every copy.
+     */
+    /** A copy comes back to the shelf through the desk, loan row and all. */
+    private void returnCopy(long copyId) {
+        var loan = jdbc.queryForObject(
+                "select id from loans where copy_id = ? and returned_at is null", Long.class, copyId);
+        assertThat(librarian.post("/loans/" + loan + "/return", Map.of()).status())
+                .as("return copy %s", copyId).isEqualTo(200);
+    }
+
+    private void lendEveryCopy() {
+        for (Long copy : jdbc.queryForList("select id from copies order by id", Long.class)) {
+            librarian.post("/loans", Map.of("copyId", copy, "readerId", readerId));
+        }
     }
 
     @Test

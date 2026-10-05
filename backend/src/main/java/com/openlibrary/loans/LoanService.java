@@ -183,6 +183,16 @@ public class LoanService {
             throw new ApiException(HttpStatus.CONFLICT, "already_has_the_book",
                     "Ya tienes este libro prestado.");
         }
+        Integer onShelf = jdbc.queryForObject("""
+                select count(*) from copies
+                where book_id = ? and status = 'DISPONIBLE'
+                """, Integer.class, bookId);
+        if (onShelf != null && onShelf > 0) {
+            // A queue entry on an available book blocks the desk from lending it to
+            // anyone else, so the reader is told to go and borrow it instead.
+            throw new ApiException(HttpStatus.CONFLICT, "book_available",
+                    "Ya hay un ejemplar en la estanteria: pidelo en el mostrador.");
+        }
         var existing = reservations
                 .findByBookIdAndUserIdAndFulfilledAtIsNullAndCancelledAtIsNull(bookId, readerId);
         if (existing.isPresent()) {
@@ -199,12 +209,61 @@ public class LoanService {
     public void cancelReservation(Long id) {
         var reservation = reservations.findById(id)
                 .orElseThrow(() -> notFound("reservation_not_found", "No existe la reserva " + id + "."));
+        // A reader may only drop their own place in the queue, and gets a 404 for
+        // anybody else's: they have no business knowing it exists.
+        if (!reservation.getUserId().equals(caller.id())) {
+            throw notFound("reservation_not_found", "No existe la reserva " + id + ".");
+        }
         if (!reservation.isOpen()) {
             throw new ApiException(HttpStatus.CONFLICT, "reservation_not_open",
                     "Esa reserva ya no esta en la cola.");
         }
         reservation.cancel(clock.instant());
         audit.record(caller.id(), "reservations.cancelled", "book", reservation.getBookId(), Map.of());
+    }
+
+    /**
+     * Everything a card holder needs about themselves in one call: what they have
+     * borrowed, what they have already given back and where they stand in the queues.
+     * The reader id comes from the session, never from the request.
+     */
+    @Transactional(readOnly = true)
+    public LoanDtos.MyLibrary myLibrary() {
+        var readerId = caller.id();
+        var open = loans.findOpen(readerId, PageRequest.of(0, 50,
+                Sort.by(Sort.Direction.ASC, "dueAt")));
+        var closed = loans.findClosed(readerId, PageRequest.of(0, 50,
+                Sort.by(Sort.Direction.DESC, "returnedAt")));
+        return new LoanDtos.MyLibrary(
+                open.getContent().stream().map(this::summary).toList(),
+                closed.getContent().stream().map(this::summary).toList(),
+                myReservationsDetailed());
+    }
+
+    /**
+     * The caller's own reservations, each with its place in the queue and whether
+     * the book is on the shelf right now: those two numbers are the whole reason a
+     * reservation exists.
+     */
+    private List<LoanDtos.MyReservation> myReservationsDetailed() {
+        var result = new java.util.ArrayList<LoanDtos.MyReservation>();
+        for (var reservation : reservations.findByUser(caller.id())) {
+            if (!reservation.isOpen()) {
+                continue;
+            }
+            var queue = reservations.queueFor(reservation.getBookId());
+            var available = jdbc.queryForObject(
+                    "select count(*) from copies where book_id = ? and status = 'DISPONIBLE'",
+                    Long.class, reservation.getBookId());
+            var title = jdbc.query("select title from books where id = ?",
+                    (rs, n) -> rs.getString("title"), reservation.getBookId());
+            result.add(new LoanDtos.MyReservation(
+                    reservation.getId(), reservation.getBookId(),
+                    title.isEmpty() ? null : title.get(0), reservation.getCreatedAt(),
+                    queue.indexOf(reservation) + 1, queue.size(),
+                    available != null && available > 0));
+        }
+        return result;
     }
 
     @Transactional(readOnly = true)

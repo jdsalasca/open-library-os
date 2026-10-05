@@ -69,6 +69,9 @@ public class SecurityConfig {
                         // their own place in the queue, so this rule has to come before
                         // the staff-wide /loans/** rules that would answer 403.
                         .requestMatchers("/loans/reservations/**").authenticated()
+                        // A card holder may ask about their own loans, and only
+                        // their own: the service takes the reader from the session.
+                        .requestMatchers(HttpMethod.GET, "/loans/mine").authenticated()
                         .requestMatchers(HttpMethod.GET, "/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/reservations/**").authenticated()

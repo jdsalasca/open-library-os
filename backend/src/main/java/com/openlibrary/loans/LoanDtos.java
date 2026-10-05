@@ -1,6 +1,7 @@
 package com.openlibrary.loans;
 
 import java.time.Instant;
+import java.util.List;
 
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
@@ -44,5 +45,23 @@ public final class LoanDtos {
 
     /** The policy settings the desk can see and understand. */
     public record SettingsSummary(int loanDays, int readerLimit, int maxRenewals) {
+    }
+
+    /** One reservation as its owner sees it: place in the queue and availability. */
+    public record MyReservation(
+            Long id,
+            Long bookId,
+            String bookTitle,
+            Instant createdAt,
+            int place,
+            int queueLength,
+            boolean availableNow) {
+    }
+
+    /** Everything a card holder sees about themselves. */
+    public record MyLibrary(
+            List<LoanSummary> loans,
+            List<LoanSummary> history,
+            List<MyReservation> reservations) {
     }
 }

@@ -3,6 +3,9 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams } from 'react-router-dom';
 
 import { deleteBook, getBook } from '../api/catalog';
+import { myLibrary } from '../api/myLibrary';
+import { RESERVE_TEXT, reserveBook } from '../api/loans';
+import { ApiError } from '../api/client';
 import { Badge, Button, Card, CardBody, CardHeader, ErrorState, LoadingState, PageHead } from '../components';
 import { useAuth } from '../auth/auth-context';
 import './BookDetail.scss';
@@ -76,21 +79,24 @@ export function BookDetail() {
         title={data.title}
         lead={data.authors.map((a) => a.name).join(', ')}
         actions={
-          can('catalog:write') ? (
-            <>
-              <Button to={`/catalogo/${data.id}/editar`} variant="secondary" size="sm">
-                Editar
-              </Button>
-              <Button
-                variant="danger"
-                size="sm"
-                onClick={() => (confirming ? remove.mutate() : setConfirming(true))}
-                loading={remove.isPending}
-              >
-                {confirming ? 'Confirma el borrado' : 'Borrar'}
-              </Button>
-            </>
-          ) : undefined
+          <>
+            <ReserveAction bookId={data.id} />
+            {can('catalog:write') && (
+              <>
+                <Button to={`/catalogo/${data.id}/editar`} variant="secondary" size="sm">
+                  Editar
+                </Button>
+                <Button
+                  variant="danger"
+                  size="sm"
+                  onClick={() => (confirming ? remove.mutate() : setConfirming(true))}
+                  loading={remove.isPending}
+                >
+                  {confirming ? 'Confirma el borrado' : 'Borrar'}
+                </Button>
+              </>
+            )}
+          </>
         }
       />
 
@@ -154,5 +160,51 @@ export function BookDetail() {
         </div>
       </div>
     </div>
+  );
+}
+
+/**
+ * Reserving lives on the book page because that is where a reader finds out a
+ * title exists. The backend decides whether it makes sense: a book that is on the
+ * shelf must be borrowed at the desk, and a reader who already has it cannot queue.
+ */
+function ReserveAction({ bookId }: { bookId: number }) {
+  const reserve = useMutation({ mutationFn: () => reserveBook(bookId) });
+  const mine = useQuery({ queryKey: ['my-library'], queryFn: myLibrary });
+  const alreadyQueued = mine.data?.reservations.some((r) => r.bookId === bookId);
+  const failure = (error: unknown) => {
+    const api = error as ApiError;
+    return RESERVE_TEXT[api.code ?? ''] ?? api.message;
+  };
+
+  if (alreadyQueued) {
+    return (
+      <Badge tone="accent" dot>
+        Ya lo tienes reservado
+      </Badge>
+    );
+  }
+
+  return (
+    <span className="book__reserve">
+      <Button
+        variant="secondary"
+        size="sm"
+        loading={reserve.isPending}
+        onClick={() => reserve.mutate()}
+      >
+        Reservar
+      </Button>
+      {reserve.isError && (
+        <span className="book__reserve-error" role="alert">
+          {failure(reserve.error)}
+        </span>
+      )}
+      {reserve.isSuccess && (
+        <Badge tone="success" dot>
+          Reservado
+        </Badge>
+      )}
+    </span>
   );
 }
