@@ -247,7 +247,8 @@ public class CatalogService {
         return value == null || value.isBlank() ? null : value.trim();
     }
 
-    private static CatalogDtos.BookSummary toSummary(Book book) {
+    /** Package-private so the suggestions panel shows the same projection, not a copy of it. */
+    static CatalogDtos.BookSummary toSummary(Book book) {
         return new CatalogDtos.BookSummary(
                 book.getId(), book.getTitle(), book.getSubtitle(),
                 authorRefs(book),

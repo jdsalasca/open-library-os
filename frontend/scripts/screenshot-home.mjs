@@ -13,10 +13,27 @@ import { mkdir } from 'node:fs/promises';
 import path from 'node:path';
 
 const BASE = process.env.BASE_URL ?? 'http://127.0.0.1:8090';
-const OUT = path.resolve('../docs/screenshots/round-12');
+const OUT = path.resolve('../docs/screenshots/round-13');
 const ADMIN = { email: 'admin@local', password: 'NuevaClave2026' };
 
 await mkdir(OUT, { recursive: true });
+
+// After a rebuild the backend gets a new IP and nginx keeps the old one for a
+// while, which shows up as a 502 on the first requests. Wait for a real answer
+// instead of guessing how long a container takes.
+const probe = async () =>
+  fetch(`${BASE}/api/actuator/health`)
+    .then((r) => r.ok)
+    .catch(() => false);
+let apiUp = await probe();
+for (let i = 0; i < 30 && !apiUp; i++) {
+  await new Promise((r) => setTimeout(r, 2000));
+  apiUp = await probe();
+}
+if (!apiUp) {
+  console.error(`la API no responde por el proxy en ${BASE}: reinicia el frontend`);
+  process.exit(1);
+}
 
 const browser = await chromium.launch();
 const problems = [];
@@ -59,14 +76,16 @@ await shot('01-inicio-panel');
 const text = await page.locator('body').innerText();
 console.log('   vencidos visibles:', /vencid/i.test(text));
 
+// Wait for the panel itself, not for a number of milliseconds: after a reload
+// the app needs a round trip to know who you are.
 await page.emulateMedia({ colorScheme: 'dark' });
 await page.reload();
-await page.waitForTimeout(1200);
+await page.waitForSelector('.home__stats, .home__below', { timeout: 15_000 });
 await shot('02-inicio-oscuro');
 
 await page.setViewportSize({ width: 390, height: 844 });
 await page.reload();
-await page.waitForTimeout(1200);
+await page.waitForSelector('.home__stats', { timeout: 15_000 });
 await shot('03-inicio-movil');
 
 // The reader half: no other people's debts. A throwaway account with a known

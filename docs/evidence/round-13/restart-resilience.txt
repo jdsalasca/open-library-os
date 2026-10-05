@@ -1,0 +1,9 @@
+1. iniciando sesion en http://127.0.0.1:8090
+2. reiniciando backend y frontend
+ Container open-library-os-backend-1 Restarting 
+ Container open-library-os-frontend-1 Restarting 
+ Container open-library-os-frontend-1 Started 
+ Container open-library-os-backend-1 Started 
+3. la misma cookie, despues del reinicio
+4. y sigue funcionando de verdad
+OK la sesion sobrevive al reinicio: vive en Postgres, no en la memoria

@@ -41,6 +41,17 @@ export type UpsertBook = {
   categories: string[];
 };
 
+export interface Suggestions {
+  totalBooks: number;
+  recent: BookSummary[];
+  results: BookSummary[];
+}
+
+/** The shelf count, the newest arrivals and a quick search, in one call. */
+export function suggestions(q?: string) {
+  return api.get<Suggestions>(`/catalog/suggestions${q ? `?q=${encodeURIComponent(q)}` : ''}`);
+}
+
 export type Page<T> = {
   content: T[];
   page: number;

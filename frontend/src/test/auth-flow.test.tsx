@@ -49,6 +49,34 @@ function renderApp(initial = '/entrar') {
   );
 }
 
+/**
+ * Answers by URL, not by call order.
+ *
+ * With `mockResolvedValueOnce` the answers only line up if the component asks
+ * for exactly these calls in exactly this sequence. One refetch and the mocks
+ * land on the wrong request, which is what made this file flaky under load.
+ */
+function mockApi(options: {
+  me?: unknown | Response;
+  login?: unknown | Response;
+  loginThrows?: boolean;
+}) {
+  vi.mocked(fetch).mockImplementation(async (input: RequestInfo | URL) => {
+    const url = String(input);
+    if (url.includes('/auth/login')) {
+      if (options.loginThrows) throw new TypeError('Failed to fetch');
+      return reply(options.login, 200);
+    }
+    if (url.includes('/auth/me')) return reply(options.me, options.me === undefined ? 401 : 200);
+    return json({ token: 't', header: 'X-XSRF-TOKEN' });
+  });
+}
+
+function reply(body: unknown | Response | undefined, status: number) {
+  if (body instanceof Response) return body;
+  return json(body ?? { code: 'unauthenticated' }, status);
+}
+
 describe('flujo de autenticacion', () => {
   beforeEach(() => {
     vi.stubGlobal('fetch', vi.fn());
@@ -59,9 +87,7 @@ describe('flujo de autenticacion', () => {
   });
 
   it('muestra el formulario de entrada cuando no hay sesion', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(json({ token: 't', header: 'X-XSRF-TOKEN' })) // csrf
-      .mockResolvedValueOnce(json({ code: 'unauthenticated' }, 401)); // me
+    mockApi({});
 
     renderApp();
 
@@ -70,11 +96,7 @@ describe('flujo de autenticacion', () => {
   });
 
   it('inicia sesion y deja pasar a la zona protegida', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(json({ token: 't', header: 'X-XSRF-TOKEN' })) // csrf
-      .mockResolvedValueOnce(json({ code: 'unauthenticated' }, 401)) // me
-      .mockResolvedValueOnce(json({ token: 't2', header: 'X-XSRF-TOKEN' })) // csrf del login
-      .mockResolvedValueOnce(json(me)); // login
+    mockApi({ me: undefined, login: me });
 
     renderApp('/entrar');
 
@@ -86,13 +108,7 @@ describe('flujo de autenticacion', () => {
   });
 
   it('muestra el mensaje del servidor cuando las credenciales son invalidas', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(json({ token: 't', header: 'X-XSRF-TOKEN' }))
-      .mockResolvedValueOnce(json({ code: 'unauthenticated' }, 401))
-      .mockResolvedValueOnce(json({ token: 't2', header: 'X-XSRF-TOKEN' }))
-      .mockResolvedValueOnce(
-        json({ detail: 'Correo o contrasena incorrectos.' }, 401),
-      );
+    mockApi({ me: undefined, login: json({ detail: 'Correo o contrasena incorrectos.' }, 401) });
 
     renderApp('/entrar');
 
@@ -104,9 +120,7 @@ describe('flujo de autenticacion', () => {
   });
 
   it('impide el acceso a la zona restringida sin el rol necesario', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(json({ token: 't', header: 'X-XSRF-TOKEN' }))
-      .mockResolvedValueOnce(json({ ...me, role: 'LECTOR', authorities: ['catalog:read'] }));
+    mockApi({ me: { ...me, role: 'LECTOR', authorities: ['catalog:read'] } });
 
     renderApp('/privada');
 
@@ -114,9 +128,7 @@ describe('flujo de autenticacion', () => {
   });
 
   it('permite el acceso cuando el rol coincide', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(json({ token: 't', header: 'X-XSRF-TOKEN' }))
-      .mockResolvedValueOnce(json(me));
+    mockApi({ me });
 
     renderApp('/privada');
 
@@ -124,11 +136,7 @@ describe('flujo de autenticacion', () => {
   });
 
   it('trata un 403 de la API como error legible', async () => {
-    vi.mocked(fetch)
-      .mockResolvedValueOnce(json({ token: 't', header: 'X-XSRF-TOKEN' }))
-      .mockResolvedValueOnce(json({ code: 'unauthenticated' }, 401))
-      .mockResolvedValueOnce(json({ token: 't2', header: 'X-XSRF-TOKEN' }))
-      .mockRejectedValueOnce(new TypeError('Failed to fetch'));
+    mockApi({ me: undefined, loginThrows: true });
 
     renderApp('/entrar');
 

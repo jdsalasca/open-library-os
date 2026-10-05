@@ -557,6 +557,54 @@ serias/críticas**, 4 servicios `healthy`, 4 capturas en
 
 ---
 
+## Ronda 13 — Tu biblioteca, y una suite que deja de mentir
+
+**Objetivo:** Inicio ya decía quién debía algo (ronda 12), pero seguía sin
+responder a la pregunta más frecuente de una biblioteca: *«¿tenéis esto?»*.
+Además, la Ronda 12 dejó al descubierto que **la suite frontend era
+intermitente**, y eso es peor que un test rojo: es un test que miente.
+
+- `GET /catalog/suggestions` (**no** es solo de personal: cualquiera con sesión
+  puede ojear las estanterías): cuántos libros hay, los 6 últimos que entraron
+  y una búsqueda rápida por título, autor o ISBN sin acentos. Reutiliza
+  `BookRepository.search` en vez de inventar una segunda búsqueda que se
+  desincronizaría de la primera.
+- `LibrarySummary` en Inicio, para los cuatro roles, con debounce de 250 ms,
+  «Sin resultados», catálogo vacío y enlaces a la ficha.
+- `CatalogService.toSummary` pasa a ser package-private: el panel **reutiliza**
+  la proyección del catálogo en vez de copiarla. Una copia habría sido la deriva
+  garantizada.
+
+**La deuda que salió al benar una captura:**
+
+1. `screenshot-home.mjs` esperaba 1200 ms y a veces sacaba la pantalla de login.
+   Una sonda con reloj mostró que la app va bien a los 300 ms: **el bug estaba en
+   el script**. Ahora espera a `.home__stats`. Y espera a que la API responda,
+   porque tras reconstruir el backend nginx se queda con la IP vieja un rato.
+2. **`auth-flow.test.tsx` fallaba según el orden de las llamadas.** Los
+   `mockResolvedValueOnce` solo encajan si el componente pregunta exactamente lo
+   mismo en exactamente ese orden; un refetch y los mocks caen en la petición
+   equivocada. Ahora `mockApi()` responde **por URL**.
+3. **`book-form-isbn-autofill.test.tsx` afirmaba fuera del `waitFor`.** El
+   formulario rellena campo a campo en renders distintos: esperar `Titulo` y
+   afirmar `Editorial` a continuación es una carrera. Todo dentro del `waitFor`.
+4. El test del debounce afirmaba «exactamente 1 llamada», que depende de la
+   velocidad del teclado. Afirma lo que importa: **menos llamadas que teclas** y
+   que la última lleve la palabra entera.
+
+Cinco pasadas seguidas en verde después de arreglarlo (antes fallaba 2 de 4).
+
+**Estado:** `done` (2026-10-05). Backend **280 tests verdes** (6 de sugerencias),
+frontend **84 verdes** (15 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, sesión resistente al reinicio,
+4 servicios `healthy`.
+
+- `Intl.NumberFormat('es-ES')` **no** pone punto en 1284 (RAE: los números de
+  cuatro cifras no llevan separador). El test daba por hecho que sí, y el
+  componente estaba bien. Ahora hay un test para las dos cosas.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

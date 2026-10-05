@@ -20,7 +20,17 @@ public final class CatalogDtos {
     public record CategoryRef(Long id, String name, String slug) {
     }
 
-    public record BookSummary(
+    /**
+ * The first screen's view of the catalogue: how big it is, what arrived
+ * lately, and anything matching what is being typed.
+ */
+public record Suggestions(
+        long totalBooks,
+        List<BookSummary> recent,
+        List<BookSummary> results) {
+}
+
+public record BookSummary(
             Long id,
             String title,
             String subtitle,

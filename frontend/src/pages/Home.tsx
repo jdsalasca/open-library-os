@@ -4,6 +4,7 @@ import { Badge, Card, CardBody, CardHeader, EmptyState, PageHead, Skeleton } fro
 import { loanDashboard } from '../api/loans';
 import { getHealth } from '../api/system';
 import { useAuth } from '../auth/auth-context';
+import { LibrarySummary } from '../components/LibrarySummary';
 import './Home.scss';
 
 /**
@@ -51,6 +52,10 @@ export function Home() {
       />
 
       {isStaff ? <StaffBoard dashboard={dashboard} /> : <ReaderBoard />}
+
+      <div className={isStaff ? 'home__below' : undefined}>
+        <LibrarySummary />
+      </div>
 
       <Card className="home__stack">
         <CardHeader

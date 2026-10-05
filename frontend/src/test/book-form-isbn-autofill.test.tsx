@@ -83,13 +83,15 @@ describe('BookForm con relleno por ISBN', () => {
     await lookUp('9780306406157');
     await userEvent.click(await screen.findByRole('button', { name: /aplicar/i }));
 
-    await waitFor(() => {
+    // Every field goes inside the waitFor: the form fills them in successive
+// renders, so asserting the rest outside would race with the slow machine.
+await waitFor(() => {
       expect(screen.getByLabelText('Titulo')).toHaveValue('Neuromancer');
+      expect(screen.getByLabelText('Editorial')).toHaveValue('Ace');
+      expect(screen.getByLabelText('Año')).toHaveValue(1984);
+      expect(screen.getByLabelText('Paginas')).toHaveValue(271);
+      expect(screen.getByLabelText('Idioma')).toHaveValue('en');
     });
-    expect(screen.getByLabelText('Editorial')).toHaveValue('Ace');
-    expect(screen.getByLabelText('Año')).toHaveValue(1984);
-    expect(screen.getByLabelText('Paginas')).toHaveValue(271);
-    expect(screen.getByLabelText('Idioma')).toHaveValue('en');
   });
 
   it('vuelve a escribir el ISBN canonico que devuelve el backend', async () => {
@@ -136,7 +138,10 @@ describe('BookForm con relleno por ISBN', () => {
     await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
     await userEvent.click(await screen.findByRole('button', { name: /aplicar/i }));
 
-    // The typed title must survive: autofill never deletes manual work.
-    expect(screen.getByLabelText('Titulo')).toHaveValue('Titulo escrito a mano');
+    // The typed title must survive: autofill never deletes manual work. Waited
+    // for, because the form applies the provider's data over several renders.
+    await waitFor(() => {
+      expect(screen.getByLabelText('Titulo')).toHaveValue('Titulo escrito a mano');
+    });
   });
 });

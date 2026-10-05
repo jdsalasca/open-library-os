@@ -23,10 +23,22 @@ public class CatalogController {
 
     private final CatalogService catalog;
     private final CurrentUser caller;
+    private final SuggestionService suggestions;
 
-    public CatalogController(CatalogService catalog, CurrentUser caller) {
+    public CatalogController(CatalogService catalog, CurrentUser caller,
+            SuggestionService suggestions) {
         this.catalog = catalog;
         this.caller = caller;
+        this.suggestions = suggestions;
+    }
+
+    /**
+     * The shelf count, the newest arrivals and a quick search. Any signed-in
+     * person may browse the catalogue, so this is not staff-only.
+     */
+    @GetMapping("/suggestions")
+    public CatalogDtos.Suggestions suggestions(@RequestParam(required = false) String q) {
+        return suggestions.suggestions(q);
     }
 
     @GetMapping("/books")
