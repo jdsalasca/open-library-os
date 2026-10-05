@@ -65,6 +65,10 @@ public class SecurityConfig {
 
                         .requestMatchers("/inventory/**").hasAuthority(Role.INVENTORY_WRITE)
 
+                        // Order matters and is the whole point of matching by URL: a reader manages
+                        // their own place in the queue, so this rule has to come before
+                        // the staff-wide /loans/** rules that would answer 403.
+                        .requestMatchers("/loans/reservations/**").authenticated()
                         .requestMatchers(HttpMethod.GET, "/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/reservations/**").authenticated()

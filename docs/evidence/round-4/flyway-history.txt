@@ -1,0 +1,10 @@
+ version | description 
+---------+-------------
+ 1       | baseline
+ 2       | auth
+ 3       | catalog
+ 6       | isbn cache
+ 7       | inventory
+ 8       | loans
+(6 rows)
+

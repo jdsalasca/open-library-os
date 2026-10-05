@@ -110,7 +110,7 @@ búsqueda, estado vacío, detalle y formulario), salida real en `docs/evidence/r
 - Migraciones `V*.sql` inmutables una vez aplicadas (Flyway lo comprueba). Está documentado en
   el README porque romperlo impide arrancar el backend.
 
-**➡️ Siguiente:** Ronda 4 — Préstamos, reservas y lector de código de barras.
+**➡️ Siguiente:** Ronda 6 — Mapa 3D navegable mobile-first.
 
 **Objetivo:** CRUD completo de libros con autores múltiples, editoriales, categorías, ISBN.
 
@@ -180,6 +180,36 @@ búsqueda, estado vacío, detalle y formulario), salida real en `docs/evidence/r
 - Tests: todas las reglas de préstamo como tests de dominio; integración de la máquina de estados.
 
 **Entregable:** préstamo → vencimiento → renovación → devolución con escáner.
+
+**Estado:** `done` (2026-10-04). Backend **219 tests verdes** (16 de `LoanPolicyTest` + 20 de
+`LoanApiTest`), frontend **51 verdes**, `oxlint` 0 avisos, `tsc` limpio, 4 servicios `healthy`.
+
+- Migración **`V8__loans.sql`** (no `V5`, porque `V6` y `V7` ya estaban aplicadas): `loans`,
+  `reservations`. Un índice único parcial (`copy_id` donde `returned_at is null`) es la garantía real
+  de que dos mostradores no pueden prestar el mismo ejemplar a la vez.
+- `LoanPolicy` contiene **todas** las reglas sin Spring ni base de datos, y cada rechazo lleva un
+  código estable (`copy_not_available`, `reader_limit_reached`, `book_reserved_by_other_reader`,
+  `renewal_limit_reached`, `loan_overdue`…) que la pantalla traduce a un mensaje. `LoanService` carga
+  los hechos y deja decidir a la política: una sola implementación de las reglas.
+- Los plazos se leen de `app_config` (`loans.days_default`, `loans.max_active_per_reader`,
+  `loans.max_renewals`), sembradas en `V1`: se cambian sin redesplegar. `GET /loans/settings` los
+  enseña en la cabecera de la pantalla.
+- Vencimiento por **día completo**, no por hora: un préstamo devuelto a las 23:59 del día límite no
+  está vencido.
+- Reservas: cola por `created_at`, la de `/loans/queue` es del mostrador (staff) y
+  `/loans/reservations` es solo la del propio lector. El orden de las reglas de seguridad importa:
+  la regla de reservas va **antes** de `GET /loans/**` o el lector recibe 403.
+- Lector de códigos (`frontend/src/hooks/useScanner.ts`): escáner USB por *wedge* de teclado
+  (ráfaga corta + Enter), `BarcodeDetector` nativo cuando existe y campo manual. Sin `@zxing/browser`:
+  no hizo falta.
+- `GET /loans` devuelve por defecto **solo los activos**. Mezclaba los ya devueltos y la pantalla
+  llegaba a decir "en plazo" de un libro que ya estaba en la estantería; el historial va aparte
+  (`state=CLOSED`).
+- Dos bugs encontrados por las capturas y cubiertos con test: prestar a un id de lector inexistente
+  devolvía **500** por la clave foránea (ahora 404 `reader_not_found`), y en móvil el botón
+  "Devolver" quedaba fuera de pantalla tras un scroll lateral (ahora cabe, con aserción en el script).
+- Capturas en `docs/screenshots/round-4/` (mostrador vacío, ejemplar encontrado, prestado, renovado,
+  devuelto, rechazo legible, oscuro y móvil) y salida real en `docs/evidence/round-4/`.
 
 ---
 

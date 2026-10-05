@@ -16,6 +16,7 @@ const PATHS = {
   shield: 'M12 3.5 19.5 6v5.5c0 4.2-3 7.6-7.5 9-4.5-1.4-7.5-4.8-7.5-9V6L12 3.5Z',
   catalog: 'M5 5.5h3V16H5zM10.5 3h3v13h-3zM16 7.5h3V16h-3zM3 17.5h18v2H3z',
   barcode: 'M3 5v14M6.5 5v14M10 5v10M13.5 5v14M17 5v10',
+  loans: 'M4 6.5h6v3.5H4zM4 13h6v3.5H4zM13 6.5h7v3.5h-7zM13 13h7v3.5h-7z',
 } as const;
 
 export type IconName = keyof typeof PATHS;

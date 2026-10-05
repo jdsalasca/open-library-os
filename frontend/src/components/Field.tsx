@@ -1,6 +1,7 @@
 import type {
   InputHTMLAttributes,
   ReactNode,
+  Ref,
   SelectHTMLAttributes,
   TextareaHTMLAttributes,
 } from 'react';
@@ -25,10 +26,19 @@ type SelectProps = Base &
     options: Array<{ value: string; label: string }>;
   };
 
-export type FieldProps = TextProps | AreaProps | SelectProps;
+export type FieldProps =
+  (TextProps | AreaProps | SelectProps) & {
+    /**
+     * Forwarded to the control. Typed for the input case because that is what a
+     * desk screen focuses; the component casts once when it is a select or a
+     * textarea.
+     */
+    ref?: Ref<HTMLInputElement>;
+  };
 
 export function Field(props: FieldProps) {
-  const { label, ariaLabel, hint, error, as = 'input' } = props;
+  const { label, ariaLabel, hint, error, as = 'input', ref } = props;
+  const controlRef = ref as Ref<never> | undefined;
   const id = useId();
   const describedBy = [hint && `${id}-hint`, error && `${id}-error`]
     .filter(Boolean)
@@ -46,12 +56,12 @@ export function Field(props: FieldProps) {
   if (as === 'textarea') {
     const { as: _as, label: _l, ariaLabel: _a, hint: _h, error: _e, ...rest } =
       props as AreaProps;
-    control = <textarea {...rest} {...a11y} rows={rest.rows ?? 4} />;
+    control = <textarea ref={controlRef} {...rest} {...a11y} rows={rest.rows ?? 4} />;
   } else if (as === 'select') {
     const { as: _as, label: _l, ariaLabel: _a, hint: _h, error: _e, options, ...rest } =
       props as SelectProps;
     control = (
-      <select {...rest} {...a11y}>
+      <select ref={controlRef} {...rest} {...a11y}>
         {options.map((option) => (
           <option key={option.value} value={option.value}>
             {option.label}
@@ -62,7 +72,7 @@ export function Field(props: FieldProps) {
   } else {
     const { as: _as, label: _l, ariaLabel: _a, hint: _h, error: _e, ...rest } =
       props as TextProps;
-    control = <input {...rest} {...a11y} />;
+    control = <input ref={controlRef} {...rest} {...a11y} />;
   }
 
   return (
