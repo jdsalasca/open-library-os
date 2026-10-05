@@ -1,1 +1,20 @@
-[]
+[
+  {
+    "who": "lector",
+    "theme": "light",
+    "screen": "mi-biblioteca",
+    "id": "color-contrast",
+    "impact": "serious",
+    "help": "Elements must meet minimum color contrast ratio thresholds",
+    "nodes": [
+      {
+        "target": ".mine__loans--history > li > .mine__book > .mine__code",
+        "summary": "Fix any of the following:   Element has insufficient color contrast of 4.32 (foreground color: #7d7972, background color: #ffffff, font size: 9.0pt (12px), font weight: normal). Expected contrast ratio of 4.5:1"
+      },
+      {
+        "target": "li > .mine__date",
+        "summary": "Fix any of the following:   Element has insufficient color contrast of 4.32 (foreground color: #7d7972, background color: #ffffff, font size: 9.8pt (13px), font weight: normal). Expected contrast ratio of 4.5:1"
+      }
+    ]
+  }
+]

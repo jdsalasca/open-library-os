@@ -81,10 +81,12 @@
   white-space: nowrap;
 }
 
+// No opacity here on purpose: it blended the whole subtree with the page and
+// pushed the book code down to 4.3:1. The children already use the muted
+// tokens, which is what makes a past loan look secondary anyway.
 .mine__loans--history {
-  li {
-    opacity: 0.8;
-  }
+  border-left: 2px solid var(--border);
+  padding-left: var(--space-3);
 }
 
 .mine__error {

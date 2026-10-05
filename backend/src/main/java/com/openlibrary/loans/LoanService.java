@@ -31,6 +31,16 @@ import com.openlibrary.shared.CurrentUser;
 @Service
 public class LoanService {
 
+    /**
+     * The letters a Spanish name is likely to type with an accent and still expect
+     * to find. {@code translate} needs both lists to be exactly as long as each
+     * other, which is why they live here as one constant and not inline twice.
+     */
+    private static final String FOLD_FROM =
+            "áàäâãåéèëêíìïîóòöôõúùüûñçýÁÀÄÂÃÅÉÈËÊÍÌÏÎÓÒÖÔÕÚÙÜÛÑÇÝ";
+    private static final String FOLD_TO =
+            "aaaaaaeeeeiiiiooooouuuuncyAAAAAEEEEIIIIOOOOOUUUUNNCY";
+
     private static final String KEY_DAYS = "loans.days_default";
     private static final String KEY_LIMIT = "loans.max_active_per_reader";
     private static final String KEY_RENEWALS = "loans.max_renewals";
@@ -264,6 +274,48 @@ public class LoanService {
                     available != null && available > 0));
         }
         return result;
+    }
+
+    /**
+     * Finds readers for the desk by name, email or card number.
+     *
+     * <p>Accents and case are folded in SQL with {@code translate}, the same trick
+     * the catalogue uses with {@code search_text}: Postgres ships no unaccent and
+     * a librarian typing "garcia" has to find "García".
+     *
+     * <p>Without a query nothing is returned on purpose. "Show me every account"
+     * is not a thing the desk needs, and an empty list says "type something"
+     * instead of dumping the user table.
+     */
+    @Transactional(readOnly = true)
+    public List<LoanDtos.DeskReader> searchReaders(String query) {
+        if (query == null || query.isBlank()) {
+            return List.of();
+        }
+        String needle = query.trim().toLowerCase();
+        return jdbc.query("""
+                select u.id, u.email, u.full_name,
+                       (select count(*) from loans l
+                         where l.user_id = u.id and l.returned_at is null) as active_loans,
+                       (select count(*) from loans l
+                         where l.user_id = u.id and l.returned_at is null
+                           and l.due_at < ?) as overdue
+                from users u
+                where u.active
+                  and (%s like ? or %s like ? or lower(u.email) = ?)
+                order by u.full_name limit 20
+                """.formatted(foldAccents("u.full_name"), foldAccents("u.email")),
+                (rs, n) -> new LoanDtos.DeskReader(
+                        rs.getLong("id"), rs.getString("email"), rs.getString("full_name"),
+                        rs.getInt("active_loans"), rs.getInt("overdue")),
+                // JdbcTemplate has no idea what an Instant is; JPA does. Hence the cast.
+                java.sql.Timestamp.from(startOfToday()),
+                "%" + needle + "%", "%" + needle + "%", needle);
+    }
+
+    /** Folds a column to lowercase ASCII so "garcia" finds "García". */
+    private static String foldAccents(String column) {
+        return "translate(lower(" + column + "), '" + FOLD_FROM + "', '" + FOLD_TO + "')";
     }
 
     @Transactional(readOnly = true)

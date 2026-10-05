@@ -11,6 +11,7 @@ import {
   renewLoan,
   reservationQueue,
   returnLoan,
+  type DeskReader,
   type Loan,
   type LoanState,
 } from '../api/loans';
@@ -29,6 +30,7 @@ import {
   Pagination,
   type Column,
 } from '../components';
+import { ReaderPicker } from '../components/ReaderPicker';
 import { useAuth } from '../auth/auth-context';
 import { useScanner } from '../hooks/useScanner';
 import './Loans.scss';
@@ -40,7 +42,8 @@ export function Loans() {
   const { user } = useAuth();
   const queryClient = useQueryClient();
   const [page, setPage] = useState(0);
-  const [readerId, setReaderId] = useState('');
+  const [reader, setReader] = useState<DeskReader | null>(null);
+  const readerId = reader ? String(reader.id) : '';
   const [state, setState] = useState<LoanState>('OPEN');
   const [manual, setManual] = useState('');
   const [notice, setNotice] = useState<{ tone: 'ok' | 'ko'; text: string } | null>(null);
@@ -213,14 +216,7 @@ export function Loans() {
           />
           <CardBody>
             <div className="loans__desk-fields">
-              <Field
-                label="Lector (id o email)"
-                inputMode="numeric"
-                placeholder="1"
-                value={readerId}
-                onChange={(event) => setReaderId(event.target.value.trim())}
-                hint={readerId ? `Prestara al lector #${readerId}` : 'Necesario para prestar'}
-              />
+              <ReaderPicker onSelect={setReader} selected={reader} />
               <Field
                 ref={manualRef}
                 label="Codigo del ejemplar"

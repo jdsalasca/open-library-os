@@ -10,7 +10,7 @@ import { chromium } from 'playwright';
 const BASE = process.argv[2] ?? 'http://127.0.0.1:8090';
 const OUT = process.argv[3]
   ? process.argv[3]
-  : fileURLToPath(new URL('../../docs/evidence/round-9/axe-report.json', import.meta.url));
+  : fileURLToPath(new URL('../../docs/evidence/round-10/axe-report.json', import.meta.url));
 
 const STAFF = { email: 'admin@local', password: 'NuevaClave2026' };
 const READER = { email: process.argv[4] ?? 'lector@local', password: 'LectorClave2026' };

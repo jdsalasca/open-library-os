@@ -49,6 +49,19 @@ export function listLoans(
   return api.get<Page<Loan>>(`/loans${queryString(query)}`);
 }
 
+export interface DeskReader {
+  id: number;
+  email: string;
+  fullName: string;
+  activeLoans: number;
+  overdue: number;
+}
+
+/** The desk looks readers up by name, email or card number. Never by id. */
+export function searchReaders(q: string) {
+  return api.get<DeskReader[]>(`/loans/readers?q=${encodeURIComponent(q)}`);
+}
+
 export function borrow(copyId: number, readerId: number) {
   return api.post<Loan>('/loans', { copyId, readerId });
 }

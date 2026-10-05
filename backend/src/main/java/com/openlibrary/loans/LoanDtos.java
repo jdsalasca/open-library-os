@@ -58,6 +58,15 @@ public final class LoanDtos {
             boolean availableNow) {
     }
 
+    /** A reader as the desk needs them: who they are and what they already hold. */
+    public record DeskReader(
+            Long id,
+            String email,
+            String fullName,
+            int activeLoans,
+            int overdue) {
+    }
+
     /** Everything a card holder sees about themselves. */
     public record MyLibrary(
             List<LoanSummary> loans,

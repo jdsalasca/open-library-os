@@ -435,6 +435,43 @@ herramienta real que la interfaz es usable.
 
 ---
 
+## Ronda 10 — El mostrador encuentra al lector por su nombre
+
+**Objetivo:** el flujo del mostrador era inusable tal cual estaba. Pedía el
+**id numérico** del lector, y el campo ni siquiera era de texto
+(`inputMode="numeric"` sobre una caja donde el empleado tenía que leer un
+carnet). Nadie ricarta ids; la gente teclea nombres.
+
+- `GET /loans/readers?q=` (solo quien tenga `loans:operate`): busca por nombre,
+  correo o número de carnet. **Nunca devuelve la lista completa sin
+  consulta**: una caja vacía es un «escribe algo», no un volcado de la tabla
+  de cuentas.
+- Sin acentos: `translate()` pliega a ascii para que `garcia` y `GARCIA`
+  encuentren a `Bruno García Ordóñez`. Es el mismo truco que ya usaba el
+  catálogo con `search_text`, sin extensión de Postgres ni migración nueva.
+- Devuelve lo que el mostrador necesita antes de prestar: préstamos activos
+  y vencidos. Sin `passwordHash`, sin `role`, sin `mustChangePassword`.
+- `ReaderPicker` con debounce de 250 ms: teclear `brun` son **una** petición,
+  no cuatro. Con resultados, con «Sin resultados», y con estado elegido +
+  «Cambiar de lector».
+- **Contraste: `opacity: 0.8` eliminada.** El historial de préstamos atenuaba
+  el `<li>` entero, y con él el código del libro bajaba a **4.3:1** (AA pide
+  4.5:1). axe solo lo detectó cuando el lector de prueba ya tenía historial.
+
+**Estado:** `done` (2026-10-05). Backend **266 tests verdes**, frontend **76
+verdes** (13 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas** en 36 combinaciones, 4 servicios `healthy`.
+
+- El 401 de `/api/auth/me` al abrir `/login` no es un fallo: es la pregunta
+  «¿quién soy?» antes de tener sesión. Los scripts de captura lo filtran
+  **por URL exacta**, no por código, para que un 401 de verdad siga
+  rompiendo la QA.
+- Un lector recién creado por la API cae siempre en «cambiar contraseña». La
+  captura del mostrador no necesita esa sesión: la cuenta existe solo para que
+  la búsqueda la encuentre.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

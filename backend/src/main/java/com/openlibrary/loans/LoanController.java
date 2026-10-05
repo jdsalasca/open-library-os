@@ -58,6 +58,15 @@ public class LoanController {
         return loans.giveBack(id);
     }
 
+    /**
+     * The reader lookup behind the desk's quick-loan box. Staff only: a card
+     * holder has no business listing other people's accounts.
+     */
+    @GetMapping("/readers")
+    public List<LoanDtos.DeskReader> readers(@RequestParam(required = false) String q) {
+        return loans.searchReaders(q);
+    }
+
     @GetMapping("/settings")
     public LoanDtos.SettingsSummary settings() {
         return loans.settingsSummary();
