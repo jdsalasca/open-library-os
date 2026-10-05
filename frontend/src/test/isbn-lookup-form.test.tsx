@@ -28,46 +28,72 @@ const book = {
   source: 'openlibrary',
 };
 
+function problem(status: number, body: unknown): Response {
+  return new Response(JSON.stringify(body), {
+    status,
+    headers: { 'Content-Type': 'application/problem+json' },
+  });
+}
+
 describe('IsbnLookupForm', () => {
   beforeEach(() => {
     vi.restoreAllMocks();
   });
 
-  it('labels the field and does not search on its own', () => {
+  /** The ISBN field lives in the book form; this component only searches it. */
+  function renderForm(isbn: string, onApply = () => {}) {
+    return render(<IsbnLookupForm onApply={onApply} value={isbn} />, { wrapper: wrapper() });
+  }
+
+  it('does not search until the librarian asks for it', () => {
     const fetchMock = vi.fn();
     vi.stubGlobal('fetch', fetchMock);
-    render(<IsbnLookupForm onApply={() => {}} />, { wrapper: wrapper() });
 
-    expect(screen.getByLabelText(/ISBN/i)).toBeDefined();
+    renderForm('9780306406157');
+
+    expect(screen.getByRole('button', { name: /buscar por isbn/i })).toBeDefined();
     expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it('searches the ISBN it was given', async () => {
+    const fetchMock = vi.fn().mockResolvedValue(new Response(JSON.stringify(book)));
+    vi.stubGlobal('fetch', fetchMock);
+
+    renderForm('9780306406157');
+    await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
+
+    await waitFor(() => expect(screen.getByText('Neuromancer')).toBeDefined());
+    expect(String(fetchMock.mock.calls[0][0])).toContain('/isbn/9780306406157');
+  });
+
+  it('disables the button while there is nothing to search', () => {
+    vi.stubGlobal('fetch', vi.fn());
+    renderForm('   ');
+
+    expect(screen.getByRole('button', { name: /buscar por isbn/i })).toBeDisabled();
   });
 
   it('shows what the provider returned before anything is applied', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(book))));
     const onApply = vi.fn();
-    render(<IsbnLookupForm onApply={onApply} />, { wrapper: wrapper() });
+    renderForm('9780306406157', onApply);
 
-    await userEvent.type(screen.getByLabelText(/ISBN/i), '9780306406157');
-    await userEvent.click(screen.getByRole('button', { name: /buscar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
 
     await waitFor(() => expect(screen.getByText('Neuromancer')).toBeDefined());
     expect(screen.getByText(/William Gibson/)).toBeDefined();
-    // The source appears twice on purpose: as a badge on the preview and in the live
-    // region. Scope the assertion to the preview so this test cannot drift.
-    const badge = screen.getByRole('heading', { name: /Neuromancer/ }).closest('.isbn-lookup__preview');
-    expect(badge).not.toBeNull();
-    expect(badge?.textContent).toMatch(/Open Library/);
-    // Nothing is applied until the librarian confirms.
+    // The source appears twice on purpose: as a badge and in the live region.
+    const preview = screen.getByRole('heading', { name: /Neuromancer/ }).closest('.isbn-lookup__preview');
+    expect(preview?.textContent).toMatch(/Open Library/);
     expect(onApply).not.toHaveBeenCalled();
   });
 
   it('applies the book only when the librarian confirms', async () => {
     vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(book))));
     const onApply = vi.fn();
-    render(<IsbnLookupForm onApply={onApply} />, { wrapper: wrapper() });
+    renderForm('9780306406157', onApply);
 
-    await userEvent.type(screen.getByLabelText(/ISBN/i), '9780306406157');
-    await userEvent.click(screen.getByRole('button', { name: /buscar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
     await screen.findByText('Neuromancer');
     await userEvent.click(screen.getByRole('button', { name: /aplicar/i }));
 
@@ -76,44 +102,31 @@ describe('IsbnLookupForm', () => {
   });
 
   it('offers the manual form when no provider knows the ISBN', async () => {
-    vi.stubGlobal(
-      'fetch',
-      vi.fn().mockResolvedValue(
-        new Response(JSON.stringify({ code: 'not_found', detail: 'nadie' }), {
-          status: 404,
-          headers: { 'Content-Type': 'application/problem+json' },
-        }),
-      ),
-    );
-    render(<IsbnLookupForm onApply={() => {}} />, { wrapper: wrapper() });
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(problem(404, { code: 'not_found' })));
+    renderForm('9780306406157');
 
-    await userEvent.type(screen.getByLabelText(/ISBN/i), '9780306406157');
-    await userEvent.click(screen.getByRole('button', { name: /buscar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
 
-    await waitFor(() =>
-      expect(screen.getByText(/a mano/i)).toBeDefined(),
-    );
+    await waitFor(() => expect(screen.getByRole('alert')).toHaveTextContent(/a mano/i));
   });
 
   it('tells the user to retry when the providers cannot be reached', async () => {
     vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new TypeError('Failed to fetch')));
-    render(<IsbnLookupForm onApply={() => {}} />, { wrapper: wrapper() });
+    renderForm('9780306406157');
 
-    await userEvent.type(screen.getByLabelText(/ISBN/i), '9780306406157');
-    await userEvent.click(screen.getByRole('button', { name: /buscar/i }));
-
-    await waitFor(() => expect(screen.getByText(/más tarde|mas tarde/i)).toBeDefined());
-  });
-
-  it('announces the result to assistive technology', async () => {
-    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(book))));
-    render(<IsbnLookupForm onApply={() => {}} />, { wrapper: wrapper() });
-
-    await userEvent.type(screen.getByLabelText(/ISBN/i), '9780306406157');
-    await userEvent.click(screen.getByRole('button', { name: /buscar/i }));
+    await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
 
     await waitFor(() =>
-      expect(screen.getByRole('status')).toHaveTextContent(/Open Library/),
+      expect(screen.getByRole('alert')).toHaveTextContent(/más tarde|mas tarde/i),
     );
+  });
+
+  it('announces a successful lookup to assistive technology', async () => {
+    vi.stubGlobal('fetch', vi.fn().mockResolvedValue(new Response(JSON.stringify(book))));
+    renderForm('9780306406157');
+
+    await userEvent.click(screen.getByRole('button', { name: /buscar por isbn/i }));
+
+    await waitFor(() => expect(screen.getByRole('status')).toHaveTextContent(/Open Library/));
   });
 });

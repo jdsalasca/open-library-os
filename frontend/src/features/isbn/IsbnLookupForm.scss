@@ -10,6 +10,12 @@
   gap: var(--space-2);
 }
 
+.isbn-lookup__error {
+  margin: 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
 // The empty status must not reserve a line, or the form jumps when it fills in.
 .isbn-lookup__status {
   min-height: 1.25rem;

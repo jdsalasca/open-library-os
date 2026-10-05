@@ -2,28 +2,30 @@ import { useState } from 'react';
 import { useMutation } from '@tanstack/react-query';
 
 import { lookupIsbn, lookupMessage, sourceLabel, type ExternalBook } from '../../api/isbn';
-import { Badge, Button, Card, CardBody, Field } from '../../components';
+import { Badge, Button, Card, CardBody } from '../../components';
 
 import './IsbnLookupForm.scss';
 
 type Props = {
   /** Called only when the librarian confirms, so nothing is overwritten by surprise. */
   onApply: (book: ExternalBook) => void;
+  /** The ISBN already typed in the book form, so nobody types it twice. */
+  value: string;
 };
 
 /**
- * "Look up by ISBN": type 13 digits, get a filled-in book, apply it if it is right.
+ * "Look up by ISBN": fill the book from its code, apply it only if it is right.
  *
  * <p>The result is always shown before anything is applied. Autofill that silently
  * overwrites the form is worse than no autofill, because the mistake is invisible.
  */
-export function IsbnLookupForm({ onApply }: Props) {
-  const [isbn, setIsbn] = useState('');
+export function IsbnLookupForm({ onApply, value }: Props) {
+  const isbn = value;
   const [result, setResult] = useState<ExternalBook | null>(null);
   const [error, setError] = useState<string | null>(null);
 
   const lookup = useMutation({
-    mutationFn: (value: string) => lookupIsbn(value),
+    mutationFn: (code: string) => lookupIsbn(code),
     onSuccess: (book) => {
       setResult(book);
       setError(null);
@@ -35,54 +37,48 @@ export function IsbnLookupForm({ onApply }: Props) {
   });
 
   function search() {
-    const value = isbn.trim();
-    if (!value) return;
-    lookup.mutate(value);
+    const trimmed = isbn.trim();
+    if (!trimmed) return;
+    lookup.mutate(trimmed);
   }
 
   return (
     <Card>
       <CardBody>
-        <form
-          className="isbn-lookup"
-          onSubmit={(event) => {
-            event.preventDefault();
-            search();
-          }}
-        >
-          <Field
-            label="ISBN"
-            hint="Escribe el ISBN y rellenamos la ficha del libro."
-            error={error ?? undefined}
-            value={isbn}
-            inputMode="numeric"
-            autoComplete="off"
-            spellCheck={false}
-            onChange={(event) => {
-              setIsbn(event.target.value);
-              if (error) setError(null);
-            }}
-          />
-
+        {/*
+          A div, not a form: this lives inside the book form, and nested forms are
+          invalid HTML — the browser closes the outer one and the submit breaks.
+          There is no ISBN input here either: the book form already has one, and two
+          fields showing the same code is just a second thing to keep in sync.
+        */}
+        <div className="isbn-lookup">
           <div className="isbn-lookup__actions">
             <Button
-              type="submit"
+              type="button"
               variant="primary"
+              onClick={search}
               disabled={lookup.isPending || isbn.trim().length === 0}
             >
               {lookup.isPending ? 'Buscando…' : 'Buscar por ISBN'}
             </Button>
           </div>
 
+          {/* The ISBN field belongs to the book form, so the failure is announced here
+              instead of next to that field, with role="alert" so it is read at once. */}
+          {error && (
+            <p className="isbn-lookup__error" role="alert">
+              {error}
+            </p>
+          )}
+
           {/*
-            One live region, and only for the success case. The failure text is already
-            rendered by the Field, which links it with aria-describedby; repeating it here
-            would make a screen reader say it twice.
+            One live region, and only for the success case: repeating the failure here
+            too would make a screen reader say it twice.
           */}
           <p className="isbn-lookup__status" role="status">
             {result ? `Datos de ${sourceLabel(result.source)}. Revísalos antes de aplicar.` : ''}
           </p>
-        </form>
+        </div>
 
         {result && (
           <div className="isbn-lookup__preview">
