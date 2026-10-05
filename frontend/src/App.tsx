@@ -105,8 +105,24 @@ export default function App() {
         <Routes>
           <Route path="/" element={<Home />} />
           <Route path="/catalogo" element={<Catalog />} />
-          <Route path="/inventario" element={<Inventory />} />
-          <Route path="/prestamos" element={<Loans />} />
+          {/* The menu hides these by role; the route has to hide them too, or a
+              reader who types the URL gets a page full of failed requests. */}
+          <Route
+            path="/inventario"
+            element={
+              <RequireRole roles={['BIBLIOTECARIO', 'ADMINISTRATIVO', 'ADMINISTRADOR']}>
+                <Inventory />
+              </RequireRole>
+            }
+          />
+          <Route
+            path="/prestamos"
+            element={
+              <RequireRole roles={['BIBLIOTECARIO', 'ADMINISTRATIVO', 'ADMINISTRADOR']}>
+                <Loans />
+              </RequireRole>
+            }
+          />
           <Route path="/mapa" element={<LibraryMap />} />
           <Route path="/mi-biblioteca" element={<MyLibrary_ />} />
           <Route path="/catalogo/nuevo" element={<BookForm />} />

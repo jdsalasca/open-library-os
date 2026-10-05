@@ -24,7 +24,9 @@ const problems = [];
 
 async function signIn(page, { email, password }) {
   for (const candidate of [password, 'ChangeMe!2026']) {
-    await page.goto(`${BASE}/login`);
+    // /entrar is the real route; /login only works through the catch-all.
+    await page.goto(`${BASE}/entrar`);
+    await page.locator('input[name="email"]').waitFor({ state: 'visible' });
     await page.fill('input[name="email"]', email);
     await page.fill('input[name="password"]', candidate);
     await page.click('button[type="submit"]');

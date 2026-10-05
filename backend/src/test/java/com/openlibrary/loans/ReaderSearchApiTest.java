@@ -29,6 +29,8 @@ class ReaderSearchApiTest extends PostgresTest {
 
     private static final String BRUNO_EMAIL = "bruno.garcia@demo.test";
     private static final String BRUNO_NAME = "Bruno García Ordóñez";
+    private static final String ELENA_EMAIL = "elena.ibanez@demo.test";
+    private static final String ELENA_NAME = "Elena Ibáñez";
 
     @LocalServerPort
     int port;
@@ -72,6 +74,7 @@ class ReaderSearchApiTest extends PostgresTest {
                 BRUNO_EMAIL, passwords.encode(DemoUsers.READER_PASSWORD),
                 BRUNO_NAME, Role.LECTOR.name());
         brunoId = jdbc.queryForObject("select id from users where email = ?", Long.class, BRUNO_EMAIL);
+        insertReader(ELENA_EMAIL, ELENA_NAME);
 
         var book = clerk.post("/catalog/books", Map.of(
                 "title", "Neuromante",
@@ -79,6 +82,14 @@ class ReaderSearchApiTest extends PostgresTest {
                 "authors", List.of(Map.of("name", "William Gibson", "role", "AUTOR"))));
         assertThat(book.status()).as("seed book: %s", book.body()).isEqualTo(201);
         bookId = Long.valueOf(book.text("id"));
+    }
+
+    private void insertReader(String email, String name) {
+        jdbc.update("insert into users (email, password_hash, full_name, role, must_change_password)"
+                        + " values (?, ?, ?, ?, false)"
+                        + " on conflict (lower(email)) do update"
+                        + " set full_name = excluded.full_name, active = true",
+                email, passwords.encode(DemoUsers.READER_PASSWORD), name, Role.LECTOR.name());
     }
 
     private HttpTestClient signedIn(String email, String password) {
@@ -113,6 +124,15 @@ class ReaderSearchApiTest extends PostgresTest {
         var found = librarian.get("/loans/readers?q=garcia");
 
         assertThat(found.json().get(0).path("email").asText()).isEqualTo(BRUNO_EMAIL);
+    }
+
+    @Test
+    void findsAReaderWhenTheNameIsTypedWithItsAccents() {
+        // Typing the accent has to work too. It did not: the column was folded
+        // and the needle was not, so "ibañ" found nothing while "ibanez" did.
+        var found = librarian.get("/loans/readers?q=ibañ");
+
+        assertThat(found.json().get(0).path("email").asText()).isEqualTo(ELENA_EMAIL);
     }
 
     @Test

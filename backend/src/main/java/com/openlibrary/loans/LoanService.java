@@ -15,6 +15,7 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.openlibrary.catalog.Book;
 import com.openlibrary.catalog.BookRepository;
 import com.openlibrary.catalog.CatalogDtos;
 import com.openlibrary.inventory.Copy;
@@ -292,7 +293,9 @@ public class LoanService {
         if (query == null || query.isBlank()) {
             return List.of();
         }
-        String needle = query.trim().toLowerCase();
+        // Reuses the catalogue's folder so a name typed with its accents lands
+        // on the same ascii the SQL translate() produces for the column.
+        String needle = Book.fold(query);
         return jdbc.query("""
                 select u.id, u.email, u.full_name,
                        (select count(*) from loans l

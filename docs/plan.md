@@ -472,6 +472,52 @@ serias/críticas** en 36 combinaciones, 4 servicios `healthy`.
 
 ---
 
+## Ronda 11 — El stack entero, afirmado
+
+**Objetivo:** los scripts de QA manejaban el navegador real pero solo miraban la
+consola. Un flujo roto producía igual una captura bonita. Este script **falla**.
+
+- `frontend/scripts/e2e-smoke.mjs`: abrir sesión, montar la escena por API, buscar
+  al lector en el mostrador, prestar, y comprobar que el lector lo ve en su
+  rincón. Repite en el navegador lo que ningún test unitario puede ver: rutas,
+  sesión, guards y el DOM.
+- Las reglas de negocio (no prestar un libro ya fuera, tope de renovaciones,
+  cola de reservas) **no** se repiten aquí: ya las cubren 267 tests contra un
+  Postgres real. Duplicarlas en el navegador sería lento y frágil.
+
+**Tres bugs reales que encontró el propio smoke:**
+
+1. **El backend era correcto, la ruta no.** El menú escondía «Préstamos» y
+   «Inventario» a un lector, pero la **ruta** no: `/prestamos` se abría igual.
+   La API lo bloqueaba (fail-closed, 267 tests), así que no era una fuga de
+   datos, era una pantalla llena de peticiones fallidas. Ahora ambas rutas usan
+   el `RequireRole` que ya existía para `/cuentas`.
+2. **`ibañ` no encontraba a nadie; `ibanez` sí.** Al revés de como se espera.
+   La columna se plegaba con `translate()` en SQL, pero el término buscado solo
+   pasaba por `toLowerCase()`. Se reutiliza `Book.fold()` del catálogo, que ya
+   hacía NFD y quitaba los diacríticos: 10/10 en `ReaderSearchApiTest`.
+3. **La sesión sí sobrevive al reinicio, y ahora está probado.** El script
+   `verify-restart.sh` reinicia backend y frontend con la sesión abierta y
+   comprueba que la misma cookie sigue valiendo. Era una afirmación de la ronda
+   7 que nadie había medido.
+
+**Tres trampas del propio script, documentadas porque Costaron tiempo:**
+
+- `browser.newPage()` **comparte cookies** con la página anterior: la mitad del
+  test «del lector» se estaba pasando con la sesión del administrador. Hace
+  falta un `newContext()`.
+- `/login` no existe; la ruta real es `/entrar` y `/login` solo funciona por el
+  `catch-all`. Rellenar el formulario antes de que la SPA asiente es una
+  carrera. Ahora se espera al campo.
+- Esperar milisegundos fijos en vez de esperar el contenido. `waitForSelector`
+  sobre el texto que importa quita la intermitencia de raíz.
+
+**Estado:** `done` (2026-10-05). Backend **267 tests verdes**, frontend **76
+verdes** (13 suites), `oxlint` 0 avisos, `tsc` limpio, smoke e2e **0 fallos**,
+sesión resistente al reinicio, 4 servicios `healthy`.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);
