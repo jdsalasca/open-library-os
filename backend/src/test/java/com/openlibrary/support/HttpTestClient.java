@@ -54,8 +54,9 @@ public final class HttpTestClient {
         return send(write(HttpRequest.newBuilder(uri(path)), "PATCH", body));
     }
 
+    /** DELETE is a state-changing verb, so it needs the CSRF header like the rest. */
     public Result delete(String path) {
-        return send(HttpRequest.newBuilder(uri(path)).DELETE());
+        return send(write(HttpRequest.newBuilder(uri(path)), "DELETE", null));
     }
 
     /** Sends a write without the CSRF token, to prove the backend rejects it. */
@@ -99,7 +100,9 @@ public final class HttpTestClient {
     }
 
     private URI uri(String path) {
-        return URI.create(baseUrl + path);
+        // Spaces are not legal in a URI; encode them so tests can type
+        // "?q=cien anios" without thinking about it.
+        return URI.create(baseUrl + path.replace(" ", "%20"));
     }
 
     private static String payload(Object body) {

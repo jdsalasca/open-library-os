@@ -1,0 +1,99 @@
+@use '../design/tokens' as t;
+@use '../design/mixins' as *;
+
+.bookform__grid {
+  display: grid;
+  gap: var(--space-5);
+  align-items: start;
+
+  @include from(t.$bp-xl) {
+    grid-template-columns: minmax(0, 1.5fr) minmax(0, 1fr);
+    gap: var(--space-6);
+  }
+}
+
+.bookform__side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-5);
+}
+
+.bookform__fields {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-4);
+}
+
+.bookform__row {
+  display: grid;
+  gap: var(--space-3);
+  grid-template-columns: 1fr;
+
+  @include from(t.$bp-sm) {
+    grid-template-columns: 2fr 1fr 1fr;
+  }
+}
+
+.bookform__authors {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-3);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.bookform__author {
+  display: grid;
+  gap: var(--space-2);
+  align-items: end;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 8rem) auto;
+
+  // No labels after the first row, so the inputs stay compact.
+  .field__label:empty {
+    display: none;
+  }
+}
+
+.bookform__chips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2);
+  margin-bottom: var(--space-4);
+}
+
+.bookform__chip {
+  padding: var(--space-1) var(--space-3);
+  border-radius: var(--radius-pill);
+  border: 1px solid var(--border-strong);
+  background: var(--surface);
+  color: var(--text-muted);
+  font-size: var(--text-sm);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    border-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+
+  @include focus-ring;
+
+  &:hover {
+    border-color: var(--text-subtle);
+    color: var(--text);
+  }
+
+  &[data-selected] {
+    background: var(--accent-soft);
+    border-color: var(--accent-border);
+    color: var(--accent-text);
+    font-weight: var(--weight-medium);
+  }
+}
+
+.bookform__error {
+  padding: var(--space-3);
+  border-radius: var(--radius-md);
+  background: var(--danger-soft);
+  color: var(--danger);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}

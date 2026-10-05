@@ -76,6 +76,17 @@ docker compose exec -T db pg_restore -U openlibrary -d openlibrary --clean --if-
 La migracion entre instancias tambien esta disponible desde la UI (Ajustes >
 Exportar / Importar) en una version posterior.
 
+### Migraciones: la regla que no se rompe
+
+Flyway comprueba el checksum de cada migracion ya aplicada. Si editas un fichero `V*.sql`
+que ya se ejecutó, el backend **no arrancará** y lo dirá claramente. Es intencionado: es la
+protección que garantiza que tu base de datos y tu código nunca diverjan en silencio.
+
+- **Antes de una release:** las migraciones son inmutables. Corrige con una `V*.sql` nueva.
+- **En desarrollo, si te pasa:** `docker compose run --rm backend` no sirve; recrea el volumen
+  (`docker compose down && docker volume rm open-library-os_pgdata && docker compose up -d`)
+  o actualiza los checksums con `repair` de Flyway.
+
 ---
 
 ## Desarrollo local

@@ -84,7 +84,33 @@ health vuelve a `UP`. (`down -v` sí borra, a proposito: es lavia de datos manua
 
 ---
 
-## Ronda 2 — Catálogo
+## Ronda 2 — Catálogo — `done`
+
+**Estado:** verificado el 2026-10-04. Backend 145/145 (19 API + 15 dominio de catálogo),
+frontend 43/43, `tsc` limpio, `oxlint` 0 avisos, `docker compose up` con los cuatro servicios
+`healthy`. Capturas en `docs/screenshots/r2-*` (claro/oscuro x escritorio/móvil, con lista,
+búsqueda, estado vacío, detalle y formulario), salida real en `docs/evidence/round-2/`.
+
+**Decisiones que importan para las rondas siguientes:**
+
+- Autores, editoriales y categorías viajan **por nombre** en la API: el personal teclea lo que
+  sabe y el catálogo enlaza o crea la fila. Evita tres pantallas de administración aparte para
+  una biblioteca que teclea los mismos cincuenta autores.
+- Búsqueda sobre una columna desnormalizada `search_text` (minúsculas, sin acentos, con
+  título + subtítulo + ISBN + autores). Postgres no trae `unaccent` y esto evita la extensión
+  o un join por cada pulsación. Se recalcula en `Book.reindex()`.
+- **No se pueden hacer dos `join fetch` de colecciones `List` a la vez**
+  (`MultipleBagFetchException`): los créditos y las categorías se cargan por lotes con
+  `@BatchSize`, dos consultas extra por página en vez de dos por libro.
+- Orden con sintaxis **`campo:direccion`** y lista blanca de campos. `ignoreCase()` solo se
+  aplica a columnas de texto: `lower(publication_year)` es SQL inválido y Postgres lo rechaza.
+- Paginación **base 0**.
+- ISBN: se reutiliza el value object `Isbn` ya existente del módulo `isbn`, que normaliza
+  10 → 13; por eso el ISBN-10 de una edición ya registrada da 409.
+- Migraciones `V*.sql` inmutables una vez aplicadas (Flyway lo comprueba). Está documentado en
+  el README porque romperlo impide arrancar el backend.
+
+**➡️ Siguiente:** Ronda 3 — Ejemplares e inventario.
 
 **Objetivo:** CRUD completo de libros con autores múltiples, editoriales, categorías, ISBN.
 

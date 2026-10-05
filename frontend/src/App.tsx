@@ -1,17 +1,21 @@
-import { Navigate, Route, Routes } from 'react-router-dom';
+import { Navigate, Route, Routes, useParams } from 'react-router-dom';
 
 import { AppShell, LoadingState, type NavItem } from './components';
 import { useAuth } from './auth/auth-context';
 import { useTheme } from './hooks/useTheme';
+import { BookDetail } from './pages/BookDetail';
+import { BookForm } from './pages/BookForm';
+import { Catalog } from './pages/Catalog';
 import { ChangePassword } from './pages/ChangePassword';
 import { Home } from './pages/Home';
 import { Login } from './pages/Login';
 import { Users } from './pages/Users';
-import { RequireAuth, RequireRole } from './routes/guards';
+import { RequireRole } from './routes/guards';
 
 /** Hidden from roles that cannot reach them; the server enforces the same rules. */
 const NAV: NavItem[] = [
   { to: '/', label: 'Inicio', icon: 'book' },
+  { to: '/catalogo', label: 'Catalogo', icon: 'catalog' },
   {
     to: '/cuentas',
     label: 'Cuentas',
@@ -71,6 +75,10 @@ export default function App() {
       <div className="shell__inner">
         <Routes>
           <Route path="/" element={<Home />} />
+          <Route path="/catalogo" element={<Catalog />} />
+          <Route path="/catalogo/nuevo" element={<BookForm />} />
+          <Route path="/catalogo/:id" element={<BookDetail />} />
+          <Route path="/catalogo/:id/editar" element={<BookFormRoute />} />
           <Route
             path="/cuentas"
             element={
@@ -87,4 +95,9 @@ export default function App() {
   );
 }
 
-export { RequireAuth };
+/** The edit route reads the id from the path; the "new" route has none. */
+function BookFormRoute() {
+  const { id } = useParams();
+  const bookId = Number(id);
+  return Number.isFinite(bookId) ? <BookForm bookId={bookId} /> : <Navigate to="/catalogo" replace />;
+}

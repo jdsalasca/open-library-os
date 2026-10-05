@@ -1,0 +1,121 @@
+@use '../design/tokens' as t;
+@use '../design/mixins' as *;
+
+.dt__wrap {
+  overflow-x: auto;
+}
+
+.dt {
+  width: 100%;
+  border-collapse: collapse;
+
+  caption {
+    @include visually-hidden;
+  }
+
+  th,
+  td {
+    padding: var(--space-3) var(--space-4);
+    text-align: start;
+    vertical-align: middle;
+  }
+
+  [data-align='end'] {
+    text-align: end;
+  }
+
+  thead th {
+    position: sticky;
+    inset-block-start: 0;
+    z-index: 1;
+    background: var(--bg-sunken);
+    border-bottom: 1px solid var(--border);
+    font-size: var(--text-xs);
+    font-weight: var(--weight-semibold);
+    letter-spacing: var(--tracking-wide);
+    text-transform: uppercase;
+    color: var(--text-subtle);
+    white-space: nowrap;
+  }
+
+  tbody tr + tr th,
+  tbody tr + tr td {
+    border-top: 1px solid var(--border);
+  }
+
+  tbody tr:hover {
+    background: var(--surface-hover);
+  }
+
+  tbody tr[data-clickable='true'] {
+    cursor: pointer;
+
+    @include focus-ring(-2px);
+  }
+
+  [data-hide-mobile] {
+    @include below(t.$bp-md) {
+      display: none;
+    }
+  }
+}
+
+// ── Pagination ──────────────────────────────────────────────────────────────
+.pager {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  justify-content: space-between;
+  gap: var(--space-3);
+  padding: var(--space-3) var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.pager__summary {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pager__controls {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+}
+
+.pager__page {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+  font-variant-numeric: tabular-nums;
+}
+
+.pager__button {
+  display: grid;
+  place-items: center;
+  width: 2rem;
+  height: 2rem;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border);
+  background: var(--surface);
+  color: var(--text-muted);
+  transition:
+    background-color var(--dur-fast) var(--ease),
+    color var(--dur-fast) var(--ease);
+
+  @include focus-ring;
+
+  &:hover:not(:disabled) {
+    background: var(--surface-hover);
+    color: var(--text);
+  }
+
+  &:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+  }
+}
+
+// The back arrow reuses the same glyph, so it is mirrored here.
+.pager__back {
+  transform: rotate(180deg);
+}

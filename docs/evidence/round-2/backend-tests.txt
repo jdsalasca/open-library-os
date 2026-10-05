@@ -1,0 +1,20 @@
+=== backend: mvn test (suite completa) ===
+[INFO] Building open-library-os 0.1.0-SNAPSHOT
+Mockito is currently self-attaching to enable the inline-mock-maker. This will no longer work in future releases of the JDK. Please add Mockito as an agent to your build as described in Mockito's documentation: https://javadoc.io/doc/org.mockito/mockito-core/latest/org.mockito/org/mockito/Mockito.html#0.3
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 76.44 s -- in com.openlibrary.auth.AuthApiTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 37.89 s -- in com.openlibrary.auth.PermissionMatrixTest
+[INFO] Tests run: 13, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.101 s -- in com.openlibrary.auth.RoleTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.220 s -- in com.openlibrary.BaselineTest
+[INFO] Tests run: 18, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 34.65 s -- in com.openlibrary.catalog.CatalogApiTest
+[INFO] Tests run: 15, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.103 s -- in com.openlibrary.catalog.CatalogDomainTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.036 s -- in com.openlibrary.isbn.CircuitBreakerIsolationTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.059 s -- in com.openlibrary.isbn.CircuitBreakerTest
+[INFO] Tests run: 5, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.024 s -- in com.openlibrary.isbn.ExternalBookTest
+[INFO] Tests run: 9, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 6.237 s -- in com.openlibrary.isbn.GoogleBooksProviderTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 16.48 s -- in com.openlibrary.isbn.IsbnLookupApiTest
+[INFO] Tests run: 3, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.026 s -- in com.openlibrary.isbn.IsbnProviderChainBreakerTest
+[INFO] Tests run: 6, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.015 s -- in com.openlibrary.isbn.IsbnProviderChainTest
+[INFO] Tests run: 16, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.083 s -- in com.openlibrary.isbn.IsbnTest
+[INFO] Tests run: 8, Failures: 0, Errors: 0, Skipped: 0, Time elapsed: 0.366 s -- in com.openlibrary.isbn.OpenLibraryProviderTest
+[INFO] Tests run: 144, Failures: 0, Errors: 0, Skipped: 0
+[INFO] BUILD SUCCESS

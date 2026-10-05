@@ -1,0 +1,34 @@
+=== Ronda 2 - catalogo verificado contra el stack real (docker compose) ===
+Catalogo sembrado por la API publica, nunca por SQL.
+
+--- busqueda (mismo libro, escrituras distintas) ---  q=marquez                  -> 1  Cien años de soledad
+  q=MARQUEZ                  -> 1  Cien años de soledad
+  q=gabriel garcia marquez   -> 1  Cien años de soledad
+  q=Cien anos                -> 1  Cien años de soledad
+  q=9780306406157            -> 1  Historia del tiempo
+  q=inexistente              -> 0  
+
+--- orden (todos los campos soportados, ambas direcciones) ---
+  title:asc                  -> ok  Cien años de soledad | El nombre de la rosa
+  title:desc                 -> ok  Sapiens: De animales a dioses | Neuromante
+  publicationYear:asc        -> ok  Ficciones | Sapiens: De animales a dioses
+  publicationYear:desc       -> ok  Neuromante | Fundamentals
+  createdAt:asc              -> ok  Historia del tiempo | Cien años de soledad
+  createdAt:desc             -> ok  El nombre de la rosa | Fundamentals
+  pages:asc                  -> ok  Fundamentals | Neuromante
+  pages:desc                 -> ok  El nombre de la rosa | Historia del tiempo
+
+--- orden desconocido: se ignora, no rompe ---
+  sort=';drop table books' -> ok, 7 libros intactos
+
+--- paginacion (base 0) ---
+  page=0 -> Cien años de soledad, El nombre de la rosa, Ficciones | totalElements=7 totalPages=3 size=3
+
+--- unicidad de ISBN y normalizacion 10 -> 13 ---
+  crear ISBN ya usado      -> 409 (esperado 409)
+  crear ISBN-10 equivalente -> 409 (esperado 409)
+  crear ISBN invalido      -> 400 (esperado 400)
+
+--- autores multiples reutilizan la ficha existente ---
+  'El nombre de la rosa' -> Umberto Eco + Jean-Claude Carrière
+

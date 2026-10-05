@@ -1,0 +1,62 @@
+@use '../design/tokens' as t;
+@use '../design/mixins' as *;
+
+.catalog__filters {
+  margin-bottom: var(--space-5);
+}
+
+.catalog__search {
+  display: grid;
+  gap: var(--space-3);
+  align-items: end;
+
+  @include from(t.$bp-sm) {
+    grid-template-columns: minmax(0, 2fr) repeat(3, minmax(0, 1fr));
+  }
+
+  @include below(t.$bp-sm) {
+    .field__control {
+      min-height: 2.75rem;
+    }
+  }
+}
+
+.catalog__actions {
+  display: flex;
+  gap: var(--space-2);
+
+  @include from(t.$bp-sm) {
+    grid-column: 1 / -1;
+  }
+}
+
+.catalog__title {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 12rem;
+}
+
+.catalog__name {
+  font-weight: var(--weight-medium);
+}
+
+.catalog__subtitle {
+  font-size: var(--text-sm);
+  color: var(--text-muted);
+}
+
+.catalog__muted {
+  color: var(--text-muted);
+}
+
+.catalog__isbn {
+  font-family: var(--font-mono);
+  font-size: var(--text-xs);
+  color: var(--text-subtle);
+  white-space: nowrap;
+}
+
+.catalog__hint {
+  margin-top: var(--space-4);
+}

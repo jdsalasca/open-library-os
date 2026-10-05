@@ -70,8 +70,8 @@ public final class Isbn {
         return digits;
     }
 
-    // ── Checksums ─────────────────────────────────────────────────────────────
-    // Both schemes weight each position (10, 9, … 1) and require sum mod 11 == 0.
+    // Checksums. Both schemes weight each position and require the total to be a
+    // multiple of the modulus: 11 for ISBN-10, 10 for ISBN-13.
 
     private static boolean isValidIsbn10(String value) {
         if (!value.chars().allMatch(Character::isDigit)) {
