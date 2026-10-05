@@ -76,6 +76,10 @@ public class SecurityConfig {
                         // service refuses it if it belongs to somebody else.
                         // Everything else under /loans stays at the desk.
                         .requestMatchers(HttpMethod.POST, "/loans/*/renew").authenticated()
+                        // The lending policy is readable by the desk and writable
+                        // only by an administrator.
+                        .requestMatchers(HttpMethod.PUT, "/loans/settings")
+                        .hasAuthority(Role.SETTINGS_MANAGE)
                         .requestMatchers(HttpMethod.GET, "/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/loans/**").hasAuthority(Role.LOANS_OPERATE)
                         .requestMatchers("/reservations/**").authenticated()

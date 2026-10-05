@@ -84,7 +84,17 @@ public final class LoanDtos {
             List<UrgentLoan> urgent) {
     }
 
-    /** Everything a card holder sees about themselves. */
+    /** The lending policy as the administrator sets it. */
+    public record SettingsRequest(
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(365)
+            int loanDays,
+            @jakarta.validation.constraints.Min(1) @jakarta.validation.constraints.Max(50)
+            int readerLimit,
+            @jakarta.validation.constraints.Min(0) @jakarta.validation.constraints.Max(10)
+            int maxRenewals) {
+    }
+
+/** Everything a card holder sees about themselves. */
     public record MyLibrary(
             List<LoanSummary> loans,
             List<LoanSummary> history,

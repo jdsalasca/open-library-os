@@ -9,6 +9,7 @@ import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -79,6 +80,16 @@ public class LoanController {
     @GetMapping("/settings")
     public LoanDtos.SettingsSummary settings() {
         return loans.settingsSummary();
+    }
+
+    /**
+     * The lending policy, for the administrator who has to be able to change it
+     * without a shell. Staff may read it; only an administrator may write it.
+     */
+    @PutMapping("/settings")
+    public LoanDtos.SettingsSummary updateSettings(
+            @Valid @RequestBody LoanDtos.SettingsRequest body) {
+        return loans.saveSettings(body);
     }
 
     /**

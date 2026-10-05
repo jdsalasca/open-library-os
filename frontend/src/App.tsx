@@ -9,7 +9,7 @@ import { Catalog } from './pages/Catalog';
 import { Inventory } from './pages/Inventory';
 import { LibraryMap } from './pages/LibraryMap';
 import { MyLibrary_ } from './pages/MyLibrary';
-import { LibraryData } from './pages/DataTransfer';
+import { Settings } from './pages/Settings';
 import { Loans } from './pages/Loans';
 import { ChangePassword } from './pages/ChangePassword';
 import { Home } from './pages/Home';
@@ -137,7 +137,14 @@ export default function App() {
             }
           />
           <Route path="/ajustes" element={<ChangePassword />} />
-          <Route path="/ajustes/datos" element={<LibraryData />} />
+          <Route
+            path="/ajustes/datos"
+            element={
+              <RequireRole roles={['ADMINISTRADOR']}>
+                <Settings />
+              </RequireRole>
+            }
+          />
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
       </div>

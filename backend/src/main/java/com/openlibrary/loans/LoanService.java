@@ -420,6 +420,56 @@ public class LoanService {
                 defaults.loanPeriodDays());
     }
 
+    /**
+     * Writes the lending policy.
+ *
+     * <p>All or nothing: the numbers are checked first and written together, so a
+     * rejected form cannot leave the library lending three books for a month.
+     */
+    @Transactional
+    public LoanDtos.SettingsSummary saveSettings(LoanDtos.SettingsRequest request) {
+        requireSanePolicy(request);
+
+        var period = request.loanDays();
+        jdbc.update("""
+                insert into app_config (key, value) values (?, ?)
+                on conflict (key) do update set value = excluded.value, updated_at = now()
+                """, KEY_DAYS, Integer.toString(request.loanDays()));
+        jdbc.update("""
+                insert into app_config (key, value) values (?, ?)
+                on conflict (key) do update set value = excluded.value, updated_at = now()
+                """, KEY_LIMIT, Integer.toString(request.readerLimit()));
+        jdbc.update("""
+                insert into app_config (key, value) values (?, ?)
+                on conflict (key) do update set value = excluded.value, updated_at = now()
+                """, KEY_RENEWALS, Integer.toString(request.maxRenewals()));
+
+        audit.record(caller.id(), "loans.settings.updated", "app_config", null,
+                Map.of("loanDays", request.loanDays(), "readerLimit", request.readerLimit(),
+                        "maxRenewals", request.maxRenewals()));
+        return new LoanDtos.SettingsSummary(period, request.readerLimit(), request.maxRenewals());
+    }
+
+    /**
+     * Numbers that would break the shelves rather than tune them: nobody lends
+     * books for zero days, and a limit in the hundreds is a typo, not a policy.
+     */
+    private void requireSanePolicy(LoanDtos.SettingsRequest request) {
+        bad(request.loanDays() < 1 || request.loanDays() > 365, "loanDays",
+                "Los dias de prestamo van de 1 a 365.");
+        bad(request.readerLimit() < 1 || request.readerLimit() > 50, "readerLimit",
+                "El limite por lector va de 1 a 50.");
+        bad(request.maxRenewals() < 0 || request.maxRenewals() > 10, "maxRenewals",
+                "Las renovaciones van de 0 a 10.");
+    }
+
+    private void bad(boolean condition, String field, String message) {
+        if (condition) {
+            throw new ApiException(HttpStatus.BAD_REQUEST, "invalid_policy",
+                    message + " (" + field + ")");
+        }
+    }
+
     private long number(String key, long fallback) {
         try {
             var rows = jdbc.query("select value from app_config where key = ?",

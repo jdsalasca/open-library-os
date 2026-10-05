@@ -643,6 +643,47 @@ limpio, axe **0 serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy
 
 ---
 
+## Ronda 15 — Las reglas de préstamo se cambian sin servidor
+
+**Objetivo:** los días de préstamo, el límite por lector y las renovaciones
+vivían en `app_config`, que se había creado para eso pero **no tenía puerta de
+entrada**: la única forma de cambiarlos era abrir un `psql` dentro del
+contenedor. Para una app que promete no necesitar soporte externo, eso es
+justo lo que no puede quedar así.
+
+- `PUT /loans/settings` (`settings:manage`, solo administrador). El mostrador
+  sigue **leyendo** la política; escribirla es del administrador.
+- **Todo o nada:** los tres números se validan antes de escribir nada, así que
+  un formulario con un 0 a medias no deja la biblioteca prestando libros por un
+  mes. Rangos: 1–365 días, 1–50 libros, 0–10 renovaciones.
+- Un test comprobar que la política nueva **se usa en el siguiente préstamo**,
+  no que solo se guardó. Guardar un número y que el dominio siga con el otro
+  sería un ajuste de fachada.
+- `Settings` en `/ajustes/datos`: reglas de préstamo y datos en la misma
+  pantalla, con `LibraryData` en modo embebido para que no haya dos encabezados
+  de página apilados.
+
+**El bug que salió al probarlo en el navegador:**
+
+La confirmación de «Guardado» **desaparecía al instante**. La causa no era el
+servidor: invalidar la caché de la política cambiaba el `key` del formulario, lo
+que lo remontaba entero. Se arregla usando la respuesta de la mutación como
+nuevo valor (`setQueryData`) en vez de un refetch, y sin `key`: la línea «Ahora
+mismo: 14 días · max 5 por lector · 2 renovaciones» ya deja ver si alguien cambió
+la política por otro lado.
+
+- oxlint señaló dos cosas ciertas en el camino: un `setState` síncrono dentro de
+  un efecto (sustituido por un formulario hijo que inicializa su estado) y
+  `Date` en el render de la ronda 14. Ninguna era cosmetics: eran estados que
+  el componente no controlaba bien.
+
+**Estado:** `done` (2026-10-05). Backend **296 tests verdes** (7 de ajustes),
+frontend **91 verdes** (17 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 6 capturas en
+`docs/screenshots/round-15/` (la captura de QA deja los 14 días originales).
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

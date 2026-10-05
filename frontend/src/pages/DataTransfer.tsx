@@ -17,7 +17,8 @@ import './DataTransfer.scss';
  * a JSON document you can keep, read and restore on another machine without asking
  * anybody for anything.
  */
-export function LibraryData() {
+/** mbedded drops the page header when this sits inside another screen. */
+export function LibraryData({ embedded = false }: { embedded?: boolean } = {}) {
   const fileInput = useRef<HTMLInputElement | null>(null);
   const [report, setReport] = useState<ImportReport | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -59,11 +60,13 @@ export function LibraryData() {
 
   return (
     <div className="transfer">
-      <PageHead
-        eyebrow="Ajustes"
-        title="Tus datos"
-        lead="Exporta la biblioteca entera a un fichero y restáurala donde quieras. Tus datos son tuyos, también para llevártelos."
-      />
+{!embedded && (
+        <PageHead
+          eyebrow="Ajustes"
+          title="Tus datos"
+          lead="Exporta la biblioteca entera a un fichero y restáurala donde quieras. Tus datos son tuyos, también para llevártelos."
+        />
+      )}
 
       <div className="transfer__grid">
         <Card>

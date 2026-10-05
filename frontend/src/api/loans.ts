@@ -98,6 +98,11 @@ export function loanSettings() {
   return api.get<LoanSettings>('/loans/settings');
 }
 
+/** Writes the lending policy. Administrator only, and all three numbers together. */
+export function saveLoanSettings(settings: LoanSettings) {
+  return api.put<LoanSettings>('/loans/settings', settings);
+}
+
 export function myReservations() {
   return api.get<Reservation[]>('/loans/reservations');
 }
