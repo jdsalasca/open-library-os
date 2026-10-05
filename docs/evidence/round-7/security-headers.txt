@@ -1,0 +1,26 @@
+== cabeceras de seguridad servidas ==
+-- /
+   Expires: Mon, 05 Oct 2026 08:22:15 GMT
+   Cache-Control: no-cache
+   X-Content-Type-Options: nosniff
+   X-Frame-Options: SAMEORIGIN
+   Referrer-Policy: strict-origin-when-cross-origin
+   Cross-Origin-Opener-Policy: same-origin
+   Permissions-Policy: camera=(self), geolocation=(), microphone=()
+   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+-- /assets/
+   X-Content-Type-Options: nosniff
+   X-Frame-Options: SAMEORIGIN
+   Referrer-Policy: strict-origin-when-cross-origin
+   Cross-Origin-Opener-Policy: same-origin
+   Permissions-Policy: camera=(self), geolocation=(), microphone=()
+   Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data: blob:; font-src 'self' data:; connect-src 'self'; object-src 'none'; base-uri 'self'; form-action 'self'; frame-ancestors 'self'
+
+== CSP sin violaciones en todas las pantallas ==
+cabeceras ok en documento
+cabeceras ok en asset
+OK: CSP sin violaciones en todas las pantallas
+
+== resolucion de tema antes del primer pintado ==
+prefers-color-scheme=dark -> data-theme=dark
+prefers-color-scheme=light -> data-theme=light

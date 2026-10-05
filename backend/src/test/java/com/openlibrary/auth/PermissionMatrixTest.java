@@ -100,6 +100,8 @@ class PermissionMatrixTest extends PostgresTest {
                         403, 200, 200, 200),
                 Arguments.of("GET", "/reservations", "reservas propias",
                         200, 200, 200, 200),
+                Arguments.of("GET", "/admin/export", "exportar la biblioteca entera",
+                        403, 403, 403, 200),
                 Arguments.of("GET", "/settings", "ajustes",
                         403, 403, 403, 200),
                 Arguments.of("GET", "/backup", "respaldos",

@@ -314,6 +314,55 @@ verdes** (14 de `map.test.ts`), `oxlint` 0 avisos, `tsc` limpio, 4 servicios `he
 
 **Entregable:** `down`/`up` y "migrar a otra máquina" demostrados con output pegado.
 
+**Estado:** `done` (2026-10-05). Backend **245 tests verdes** (8 de `ExportImportApiTest`, 8 de
+`LoginThrottleTest`, 2 de login en `AuthApiTest`), frontend **65 verdes**, `oxlint` 0 avisos,
+`tsc` limpio, 4 servicios `healthy`.
+
+- **Migrar a otra máquina:** `GET /api/admin/export` y `POST /api/admin/import`. El documento lleva
+  `schemaVersion`; una exportación de una versión más moderna se rechaza con
+  `unsupported_schema_version` en vez de importarse a medias.
+- El import es un **upsert por clave natural** (editorial por nombre, categoría por slug, estante por
+  código, ejemplar por su código impreso, libro por ISBN y si no por título, préstamo por
+  ejemplar+fecha). Por eso importar dos veces la misma exportación deja la biblioteca idéntica, que
+  es la diferencia entre un respaldo en el que se puede confiar y uno que se restaura a ver qué pasa.
+- **Las cuentas viajan con sus hashes**, incluidos los `password_hash`: si no, migrar sería pedirle
+  a cada lector que se vuelva a registrar.
+- `scripts/verify-restore.sh` (165 líneas) restaura el dump más reciente del volumen en una base
+  temporal **dentro** del contenedor `db`, compara 8 tablas con la base viva y comprueba dos
+  invariantes. Ejecutado de verdad: 18 tablas y conteos idénticos, `EXIT=0`. El agente que lo
+  escribió dejó además una corrida de control negativa (un dump vacío → `EXIT=1`) porque un script
+  que siempre dice "OK" es indistinguible de uno que funciona.
+- **Bug real de backups encontrado por ese script:** el primer `pg_dump` tras crear el volumen salía
+  antes de que Flyway migrara, y `backup.sh` lo aceptaba porque `pg_restore --list` no distingue
+  "corrupto" de "base vacía". El healthcheck decía `healthy` con un único punto de restauración que
+  no restauraba nada. Ahora un dump sin la tabla `users` se descarta (verificado: dump vacío de 15
+  entradas → rechazado; dump real de 152 → aceptado).
+- **Hardening:** CSP estricta (`default-src 'self'`, sin `unsafe-inline` en scripts), COOP,
+  `Permissions-Policy` con `camera=(self)` (el lector de la ronda 4 la necesita), `nosniff`,
+  `X-Frame-Options`, `Referrer-Policy`, límite de subida 64 MB y rate limit de login.
+- El rate limit tiene **dos claves con umbrales distintos**: 5 fallos por cuenta y 50 por dirección.
+  Con un solo umbral, la primera contraseña mal escrita bloqueaba a toda la biblioteca detrás de
+  una NAT. El bloqueo es en memoria y caduca a los 15 minutos; no ensucia las cuentas con estado que
+  pueda dejarlas atascadas.
+- **Bug real de nginx:** un `add_header` dentro de un `location` cancela todos los `add_header`
+  heredados del `server`. Los `Cache-Control` de `/assets/` y de `/` se estaban comiendo las
+  cabeceras de seguridad, que **nunca se habían servido**. Cambiado a `expires`, que no compite con
+  la herencia. Ahora se verifican en el documento y en un asset con hash.
+- La CSP foothole al script anti-flash de `index.html`: ahora es `public/theme.js`, un fichero
+  externo. Comprobado que el tema se sigue resolviendo antes del primer pintado en claro y oscuro.
+- `LICENSE` es el texto íntegro de **AGPL-3.0**, que es lo que el README ya prometía. Y
+  `CONTRIBUTING.md`.
+- **`strict: true` activado** en `tsconfig.app.json`: el README y este plan lo afirmaban y no era
+  cierto. El código ya estaba limpio, así que no hizo falta tocar ni una línea de `src`.
+- **CI en `.github/workflows/ci.yml`**: dos jobs (backend con JDK 25 y Testcontainers, frontend
+  con Node 24) ejecutando exactamente los comandos que se ejecutan a mano, en `push` y `pull_request`
+  sobre `develop`.
+- Salida real en `docs/evidence/round-7/` y capturas de las seis pantallas con la CSP activa en
+  `docs/screenshots/round-7/`.
+
+**Nota para la siguiente ronda:** la siguiente migración es **`V9`**. Hay huecos (`V4` y `V5` no
+existen) y Flyway rechaza migraciones fuera de orden aunque el número esté libre.
+
 ---
 
 ## Métricas de calidad (revisadas cada ronda)

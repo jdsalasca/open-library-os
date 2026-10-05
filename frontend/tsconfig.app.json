@@ -17,6 +17,9 @@
     "jsx": "react-jsx",
 
     /* Linting */
+    /* strict: el README y docs/plan.md prometen type checking estricto; sin esto
+       noImplicitAny/noUncheckedIndexedAccess no existen y los null se cuelan. */
+    "strict": true,
     "noUnusedLocals": true,
     "noUnusedParameters": true,
     "erasableSyntaxOnly": true,

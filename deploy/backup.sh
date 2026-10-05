@@ -17,10 +17,20 @@ dump_once() {
     if pg_dump --format=custom --file="$target"; then
         # A dump that cannot be listed cannot be restored; drop it and retry next tick.
         if pg_restore --list "$target" >/dev/null 2>&1; then
-            echo "backup ok: $target"
-            # Freshness marker: the compose healthcheck asserts on this, so "backups
-            # are running" is observable from `docker compose ps` and not a guess.
-            date -u +%s > "$DEST/.last-ok"
+            # "Listable" is not "worth restoring". The first dump after a fresh
+            # volume was taken before Flyway had migrated anything: it listed fine,
+            # held 4 TOC entries and restored an empty database, while the
+            # healthcheck went on reporting the backup service as healthy. A
+            # library needs the tables that hold its catalogue.
+            if pg_restore --list "$target" | grep -q 'TABLE DATA public users'; then
+                echo "backup ok: $target"
+                # Freshness marker: the compose healthcheck asserts on this, so "backups
+                # are running" is observable from `docker compose ps` and not a guess.
+                date -u +%s > "$DEST/.last-ok"
+            else
+                echo "backup has no catalogue yet, discarding: $target" >&2
+                rm -f "$target"
+            fi
         else
             echo "backup corrupt, discarding: $target" >&2
             rm -f "$target"

@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import java.util.List;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -33,10 +34,20 @@ import java.util.Map;
 @RequestMapping("/auth")
 public class AuthController {
 
+    /** Behind one reverse proxy this is its address, not the client's. */
+    private static String clientAddress(HttpServletRequest request) {
+        var forwarded = request.getHeader("X-Forwarded-For");
+        if (forwarded == null || forwarded.isBlank()) {
+            return request.getRemoteAddr();
+        }
+        return forwarded.split(",")[0].trim();
+    }
+
     private final AuthenticationManager authenticationManager;
     private final UserRepository users;
     private final AuditService audit;
     private final PasswordEncoder passwords;
+    private final LoginThrottle throttle;
 
     /** Without form login there is no filter that saves the context for us. */
     private final SecurityContextRepository sessions = new HttpSessionSecurityContextRepository();
@@ -44,11 +55,13 @@ public class AuthController {
     public AuthController(AuthenticationManager authenticationManager,
                           UserRepository users,
                           AuditService audit,
-                          PasswordEncoder passwords) {
+                          PasswordEncoder passwords,
+                          LoginThrottle throttle) {
         this.authenticationManager = authenticationManager;
         this.users = users;
         this.audit = audit;
         this.passwords = passwords;
+        this.throttle = throttle;
     }
 
     @GetMapping("/csrf")
@@ -61,14 +74,32 @@ public class AuthController {
     public AuthDtos.UserProfile login(@Valid @RequestBody AuthDtos.LoginRequest body,
                                       HttpServletRequest request,
                                       HttpServletResponse response) {
+        // Two keys on purpose: the account is the precise signal, and the address
+        // only catches a script spraying many accounts. The address gets a far higher
+        // limit because a whole library can share one address behind a router.
+        var emailKey = "email:" + body.email().toLowerCase();
+        var addressKey = "ip:" + clientAddress(request);
+        for (var key : List.of(emailKey, addressKey)) {
+            var retryAfter = throttle.retryAfter(key);
+            if (!retryAfter.isZero()) {
+                response.setHeader("Retry-After", String.valueOf(retryAfter.toSeconds()));
+                throw new ApiException(HttpStatus.TOO_MANY_REQUESTS, "too_many_attempts",
+                        "Demasiados intentos. Prueba en " + retryAfter.toMinutes() + " min.");
+            }
+        }
+
         Authentication authentication;
         try {
             authentication = authenticationManager.authenticate(
                     new UsernamePasswordAuthenticationToken(body.email(), body.password()));
         } catch (BadCredentialsException e) {
+            throttle.recordFailure(emailKey, LoginThrottle.ALLOWED_FAILURES);
+            throttle.recordFailure(addressKey, LoginThrottle.ALLOWED_FAILURES_PER_ADDRESS);
             throw new ApiException(HttpStatus.UNAUTHORIZED, "bad_credentials",
                     "Correo o contrasena incorrectos.");
         }
+        throttle.recordSuccess(emailKey);
+        throttle.recordSuccess(addressKey);
 
         var context = SecurityContextHolder.createEmptyContext();
         context.setAuthentication(authentication);

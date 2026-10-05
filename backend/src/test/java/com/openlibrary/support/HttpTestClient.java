@@ -46,6 +46,18 @@ public final class HttpTestClient {
         return send(write(HttpRequest.newBuilder(uri(path)), "POST", body));
     }
 
+    /**
+     * Raw JSON text, already serialised. Needed when the payload is a document the
+     * server produced: passing that text as an Object would serialise it again into
+     * a JSON string literal, and the server would receive a string, not a document.
+     */
+    public Result postJson(String path, String jsonText) {
+        return send(HttpRequest.newBuilder(uri(path))
+                .header("Content-Type", "application/json")
+                .header("X-XSRF-TOKEN", csrfToken())
+                .POST(HttpRequest.BodyPublishers.ofString(jsonText)));
+    }
+
     public Result put(String path, Object body) {
         return send(write(HttpRequest.newBuilder(uri(path)), "PUT", body));
     }

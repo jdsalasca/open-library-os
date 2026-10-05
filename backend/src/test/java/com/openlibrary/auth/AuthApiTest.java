@@ -93,6 +93,36 @@ class AuthApiTest extends PostgresTest {
     }
 
     @Test
+    void shutsTheDoorAfterTooManyWrongPasswords() {
+        // The throttle counts per email and per address, so the reader account used
+        // by the rest of this suite has to be the one under attack.
+        String target = "throttle-" + System.nanoTime() + "@demo.test";
+        HttpTestClient.Result last = null;
+        for (int attempt = 0; attempt < LoginThrottle.ALLOWED_FAILURES; attempt++) {
+            last = client.post("/auth/login", Map.of("email", target, "password", "wrong"));
+            assertThat(last.status()).as("attempt %s", attempt).isEqualTo(401);
+        }
+
+        var blocked = client.post("/auth/login", Map.of("email", target, "password", "wrong"));
+
+        assertThat(blocked.status()).isEqualTo(429);
+        assertThat(blocked.text("code")).isEqualTo("too_many_attempts");
+    }
+
+    @Test
+    void aCorrectPasswordAfterATypoStillWorks() {
+        // Nobody may be locked out by their own typos.
+        String target = DemoUsers.READER_EMAIL;
+        client.post("/auth/login", Map.of("email", target, "password", "typo-1"));
+        client.post("/auth/login", Map.of("email", target, "password", "typo-2"));
+
+        var login = client.post("/auth/login", Map.of(
+                "email", target, "password", DemoUsers.READER_PASSWORD));
+
+        assertThat(login.status()).isEqualTo(200);
+    }
+
+    @Test
     void rejectsALoginWithoutCsrfToken() {
         var login = client.postWithoutCsrf("/auth/login", Map.of(
                 "email", DemoUsers.READER_EMAIL, "password", DemoUsers.READER_PASSWORD));

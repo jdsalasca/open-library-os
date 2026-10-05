@@ -41,6 +41,13 @@ class CatalogApiTest extends PostgresTest {
         DemoUsers.seed(dataSource, passwords);
         DemoUsers.resetPasswords(jdbc, passwords);
         jdbc.update("update users set must_change_password = false");
+        // The container is shared by every test class, so anything that points at a
+        // book has to go first: copies RESTRICT the delete of their book.
+        jdbc.update("delete from reservations");
+        jdbc.update("delete from loans");
+        jdbc.update("delete from copy_moves");
+        jdbc.update("delete from copies");
+        jdbc.update("delete from locations");
         jdbc.update("delete from book_categories");
         jdbc.update("delete from book_authors");
         jdbc.update("delete from books");

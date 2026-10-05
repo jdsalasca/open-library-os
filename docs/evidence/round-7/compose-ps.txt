@@ -1,0 +1,4 @@
+backend	Up 9 minutes (healthy)
+backup	Up 7 hours (healthy)
+db	Up 7 hours (healthy)
+frontend	Up 4 minutes (healthy)

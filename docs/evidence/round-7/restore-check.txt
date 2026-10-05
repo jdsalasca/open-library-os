@@ -1,0 +1,233 @@
+Restore drill -- round 7
+===============================================================================
+
+Script:  scripts/verify-restore.sh   (POSIX sh, `set -eu`, 165 lineas)
+Host:    Windows, Git Bash (C:\Program Files\Git\bin\sh.exe)
+Stack:   docker compose "open-library-os" -- db / backend / frontend / backup healthy
+DB:      Postgres 18.6 en el servicio `db` (no publicado al host),
+         user openlibrary, base viva openlibrary
+Fecha:   2026-10-05 01:27 -05:00
+
+Ejecutar desde la raiz del repo:
+
+    sh scripts/verify-restore.sh
+
+Que hace: localiza el dump MAS RECIENTE del volumen `backups`, lo restaura con
+pg_restore en una base temporal DENTRO del contenedor db (`openlibrary_restorecheck`),
+compara los conteos de filas contra la base viva `openlibrary`, lanza dos consultas
+de integridad logica sobre los datos restaurados y emite veredicto. La base viva no
+se toca nunca; la temporal se borra siempre por trap. Exit 0 solo si todo cuadra.
+
+
+===============================================================================
+CORRIDA A -- control negativo: el script DETECTA un backup inservible
+===============================================================================
+
+Estado real del volumen en ese momento (ls -1t /backups):
+
+    manual-check.dump                        <- aun no existia
+    openlibrary-20261005T011948Z.dump        <- el mas reciente: 854 bytes
+    openlibrary-20261004T181246Z.dump
+    openlibrary-20261004T172935Z.dump
+    openlibrary-20261004T172718Z.dump
+    openlibrary-20261004T170148Z.dump
+    openlibrary-20261004T164205Z.dump
+
+Salida real:
+
+$ sh scripts/verify-restore.sh
+dump elegido: openlibrary-20261005T011948Z.dump (854 bytes)
+base temporal: openlibrary_restorecheck (la viva openlibrary no se toca)
+pg_restore: ok
+
+  tabla                         viva restaurada  estado
+  users                            2    ausente  FALTA LA TABLA
+  books                           10    ausente  FALTA LA TABLA
+  copies                          93    ausente  FALTA LA TABLA
+  locations                        9    ausente  FALTA LA TABLA
+  loans                            2    ausente  FALTA LA TABLA
+  reservations                     0    ausente  FALTA LA TABLA
+  app_config                      10    ausente  FALTA LA TABLA
+  flyway_schema_history            6    ausente  FALTA LA TABLA
+  ---
+  tablas public: viva=18  restaurada=0
+
+  copias PRESTADO sin prestamo abierto           omitido (falta copies loans en la restaurada)
+  copies.location_id huerfano                    omitido (falta copies locations en la restaurada)
+
+VEREDICTO: FALLO - openlibrary-20261005T011948Z.dump no sirve tal cual
+EXIT=1
+
+Por que el mas reciente es un snapshot vacio (dato, no opinion): el contenedor db
+se creo a las 2026-10-05T01:19:40Z, medio segundo ANTES que ese dump, y Flyway aun
+no habia migrado. `pg_restore --list` de ese archivo devuelve 4 TOC entries, es
+decir, una base de datos vacia. El servicio `backup` lo dio por bueno y escribio su
+marcador `.last-ok` a las 01:19, asi que el healthcheck del compose reporta "healthy"
+con un unico punto de restauracion que no restaura nada.
+
+
+===============================================================================
+DUMP MANUAL (paso previsto en la tarea: el volumen no tenia un restore point util)
+===============================================================================
+
+$ docker compose exec -T backup pg_dump --format=custom --file=/backups/manual-check.dump
+pg_dump_exit=0
+
+$ docker compose exec -T backup ls -1t /backups
+manual-check.dump                          <- ahora si es el mas reciente
+openlibrary-20261005T011948Z.dump
+openlibrary-20261004T181246Z.dump
+openlibrary-20261004T172935Z.dump
+openlibrary-20261004T172718Z.dump
+openlibrary-20261004T170148Z.dump
+openlibrary-20261004T164205Z.dump
+
+
+===============================================================================
+CORRIDA FINAL -- salida real, capturada por redireccion
+===============================================================================
+
+$ sh scripts/verify-restore.sh
+dump elegido: manual-check.dump (57440 bytes)
+base temporal: openlibrary_restorecheck (la viva openlibrary no se toca)
+pg_restore: ok
+
+  tabla                         viva restaurada  estado
+  users                            2          2  ok
+  books                           10         10  ok
+  copies                          93         93  ok
+  locations                        9          9  ok
+  loans                            2          2  ok
+  reservations                     0          0  ok
+  app_config                      10         10  ok
+  flyway_schema_history            6          6  ok
+  ---
+  tablas public: viva=18  restaurada=18
+
+  copias PRESTADO sin prestamo abierto           ok (0)
+  copies.location_id huerfano                    ok (0)
+
+VEREDICTO: OK - manual-check.dump se restaura y sus datos cuadran con openlibrary
+EXIT=0
+
+===============================================================================
+VERIFICACIONES DEL SCRIPT (todo ejecutado de verdad)
+===============================================================================
+
+1) IDEMPOTENCIA -- dos corridas seguidas, salida byte a byte identica
+
+$ sh scripts/verify-restore.sh > run_a.txt 2>&1; echo "run1=$?"
+run1=0
+$ sh scripts/verify-restore.sh > run_b.txt 2>&1; echo "run2=$?"
+run2=0
+$ cmp -s run_a.txt run_b.txt && echo "SI, salida identica (idempotente)"
+SI, salida identica (idempotente)
+
+2) NO DEJA LA BASE TEMPORAL (trap) -- tras las corridas solo existen las de sistema
+
+$ docker compose exec -T db psql -U openlibrary -X -tA -d postgres \
+    -c "select datname from pg_database order by datname;"
+openlibrary
+postgres
+template0
+template1
+
+3) LA BASE VIVA SIGUE INTACTA
+
+$ docker compose exec -T db psql -U openlibrary -X -tA -d openlibrary \
+    -c "select count(*) from users;" -c "select count(*) from copies;" -c "select count(*) from loans;"
+2
+93
+2
+
+   Los mismos conteos que antes de empezar: el drill solo escribe en
+   openlibrary_restorecheck.
+
+4) LAS COMPROBACIONES DE INTEGRIDAD NO SON VACIAS
+
+   a) La invariante se ejecuta sobre datos reales en la base viva:
+
+$ docker compose exec -T db psql -U openlibrary -X -d openlibrary \
+    -c "select status, count(*) from copies group by status order by status;" \
+    -c "select returned_at is null as abierto, count(*) from loans group by 1;"
+  status   | count
+------------+-------
+ DISPONIBLE |    92
+ PRESTADO   |     1
+(2 rows)
+
+ abierto | count
+--------+-------
+ f      |     1
+ t      |     1
+(2 rows)
+
+   Hay 1 copia PRESTADO y exactamente 1 prestamo abierto: el chequeo tiene algo que
+   comprobar, no esta siempre a cero por casualidad.
+
+   b) Control negativo: meto una violacion a proposito y el chequeo la detecta.
+      Restauro el dump en una base sonda, marco una copia DISPONIBLE como PRESTADO
+      sin prestarlo, y lanzo la misma consulta que usa el script:
+
+$ ... pg_restore -h db -U openlibrary --no-owner --no-privileges -d probe_t2 /backups/manual-check.dump
+$ ... psql -d probe_t2 -c "update copies set status='PRESTADO' where id = (select min(id) from copies where status='DISPONIBLE');"
+ prestadas_sin_prestamo
+------------------------
+                      1
+(1 row)
+
+   Detecta la violacion: devuelve 1, no 0. Ese 1 es justo lo que hace el script en
+   su linea 143-149 (si n != "0" -> rc=1), o sea que la corrida habria terminado
+   con "VEREDICTO: FALLO" y exit 1. Aqui no se ejecuto el script entero sino la
+   consulta aislada sobre la base sonda, para poder meter la violacion a proposito.
+
+   c) El segundo chequeo, `copies.location_id huerfano`, solo puede dar != 0 si la
+      restauracion NO trajo las constraints, porque la FK lo impide. Comprobado:
+
+$ ... psql -d probe_t3 -c "select count(*) ... not exists (select 1 from locations ...);"
+0                                        <- FK restaurada
+$ ... psql -d probe_t3 -c "ALTER TABLE copies DROP CONSTRAINT copies_location_id_fkey;" \
+                 -c "update copies set location_id=999999 where id=(select min(id) from copies);"
+$ ... psql -d probe_t3 -c "select count(*) ... not exists (select 1 from locations ...);"
+1                                        <- restore sin constraints
+DROP DATABASE
+
+   Sin la FK, Postgres rechaza el huerfano:
+
+ERROR:  insert or update on table "copies" violates foreign key constraint "copies_location_id_fkey"
+DETAIL:  Key (location_id)=(999999) is not present in table "locations".
+
+   O sea: el chequeo es tautologico con el esquema completo, y su unico valor real
+   es confirmar que pg_restore trajo las claves foraneas. Se mantiene porque es
+   gratis y detecta exactamente ese fallo, pero no esperes que encuentre un bug de
+   datos que la base viva ya prohibe.
+
+5) COMPATIBILIDAD
+
+   - POSIX sh + `set -eu`. Sin `local`, sin `[[ ]]`, sin arrays, sin `function`.
+     Sin shellcheck instalado en esta maquina, revisado a mano.
+   - En Git Bash hay que exportar MSYS_NO_PATHCONV=1 (lo hace el propio script):
+     si no, MSYS convierte "/backups" en "C:/Program Files/Git/backups" antes de
+     llamar a docker.exe y el script no encuentra ningun dump.
+   - Tambien funciona desde un subdirectorio: docker compose sube hasta el compose
+     file. Verificado ejecutandolo desde scripts/.
+   - Todo lo que el script IMPRIME es ASCII a proposito. La salida con acentos
+     capturada desde Git Bash sale como mojibake (ver docs/evidence/round-0/
+     verify-restore.txt) y un log ilegible no es evidencia.
+
+
+===============================================================================
+VEREDICTO DE LA RONDA
+===============================================================================
+
+El backup actual (manual-check.dump, 57440 bytes) se restaura de verdad: 18 tablas,
+conteos identicos a la base viva en las 8 tablas comparadas, y las dos consultas de
+integridad limpias. El script sale con 0.
+
+Aviso que sale de esta misma corrida: el dump que el sistema genera por su cuenta
+(cada dia, BACKUP_INTERVAL=86400) NO es restaurable todavia. El mas reciente es el
+snapshot vacio de las 01:19 y el segundo mas reciente (18:12) tiene solo 6 tablas
+de un esquema previo a las migraciones de inventario y prestamos. Con KEEP_DAYS=14
+y una sola corrida diaria, la ventana de datos sin restore point utilizable llega a
+casi 24 horas. Ver "bugs encontrados" en el informe final.
+===============================================================================

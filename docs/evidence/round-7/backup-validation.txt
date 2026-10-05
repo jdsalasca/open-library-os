@@ -1,0 +1,7 @@
+== backup.sh: un dump sin catalogo debe descartarse ==
+== un dump real si debe aceptarse ==
+== healthcheck del servicio backup ==
+backend	Up About an hour (healthy)
+backup	Up 6 hours (healthy)
+db	Up 6 hours (healthy)
+frontend	Up About an hour (healthy)

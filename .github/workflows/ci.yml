@@ -1,0 +1,55 @@
+name: CI
+
+on:
+  push:
+    branches: [develop]
+  pull_request:
+    branches: [develop]
+
+jobs:
+  backend:
+    name: Backend (JDK 25, Testcontainers)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 25
+          cache: maven
+
+      # No hay mvnw en el repo: Maven viene en el PATH del runner.
+      # Los tests levantan un Postgres real con Testcontainers y migran con
+      # Flyway, asi que este job necesita el daemon de Docker de ubuntu-latest.
+      - name: Tests (mvn -B clean test)
+        run: mvn -B clean test
+        working-directory: backend
+
+  frontend:
+    name: Frontend (Node 24)
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: frontend
+    steps:
+      - uses: actions/checkout@v7
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+          cache-dependency-path: frontend/package-lock.json
+
+      - run: npm ci
+
+      # Los mismos cuatro comandos que se ejecutan a mano, en el mismo orden
+      # que CONTRIBUTING.md seccion 10.
+      - name: Typecheck (tsc -b --noEmit)
+        run: npx tsc -b --noEmit
+
+      - name: Lint (oxlint)
+        run: npx oxlint
+
+      - name: Tests (vitest run)
+        run: npx vitest run

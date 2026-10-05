@@ -85,6 +85,8 @@ public class SecurityConfig {
                         .hasAuthority(Role.SETTINGS_MANAGE)
                         .requestMatchers("/backup/**", "/export/**", "/import/**")
                         .hasAuthority(Role.BACKUP_MANAGE)
+                        // Moving the whole library between machines is the owner's job.
+                        .requestMatchers("/admin/**").hasAuthority(Role.SETTINGS_MANAGE)
 
                         .anyRequest().authenticated())
                 .exceptionHandling(errors -> errors
