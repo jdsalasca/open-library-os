@@ -722,3 +722,29 @@ serias/críticas**, smoke e2e **0 fallos**, 4 servicios `healthy`, 5 capturas en
 - Frontend: `tsc --noEmit` limpio, ESLint limpio, sin `any` implícito.
 - UX: 0 problemas de accesibilidad críticos en las pantallas nuevas (Playwright + axe).
 - Deuda: todo lo que se difiere queda anotado en `docs/plan.md` con motivo.
+
+---
+
+## Siguiente
+
+Lo que queda por hacer, en orden de valor para quien usa la biblioteca:
+
+1. **Aviso de vencimiento sin correo.** Un LECTOR no puede renovar lo vencido
+   (`LoanPolicy` lo impide, y con razón) y no hay forma de avisarle: la app no
+   manda correos a propósito. La vía sin servicios externos es una **página de
+   «mis días»** y quizá un resumen imprimible, no un SMTP.
+2. **CSV de vencidos para el mostrador.** Cuando hay que llamar a veinte personas
+   por teléfono, una hoja imprimible ahorra la pantalla. Los datos ya existen.
+3. **Limpiar `app_config` muerto.** `inventory.barcode_prefix`, `isbn.providers`
+   y `library.locale` se leen en algunos sitios y se ignoran en otros: decidirlos
+   o borrarlos.
+4. **Las 187 violaciones de `markdownlint` en este mismo plan.** Cosmético, pero
+   es el documento que orienta el trabajo.
+
+Decisiones ya tomadas que no hay que volver a discutir:
+
+- La **migración siguiente es `V9`**: `V4` y `V5` no existen y no deben aparecer.
+- Los **scripts de captura no inventan estado**. Para ver algo raro en pantalla
+  hay que prepararlo en la base, y el propio script lo dice en su cabecera.
+- **Nada de esperas fijas** en los scripts de QA: se espera al contenido
+  (.home__stats, [role="status"]), nunca a milisegundos.
