@@ -7,6 +7,12 @@ export type Reservation = {
   bookTitle?: string;
   createdAt: string;
   open: boolean;
+  /** Who is waiting: the desk has to hand the book to somebody. */
+  readerId?: number;
+  readerName?: string;
+  readerEmail?: string;
+  /** Position in the line, counting from the first arrival. */
+  place?: number;
 };
 
 export type Loan = {
@@ -125,6 +131,14 @@ export function cancelReservation(id: number) {
 
 export function reservationQueue() {
   return api.get<Reservation[]>('/loans/queue');
+}
+
+/**
+ * The queue as a spreadsheet: who to call, about which book, in which order.
+ * A screen can show "Rayuela" five times and tell the desk nothing.
+ */
+export function downloadReservationQueueCsv() {
+  return api.download('/loans/reservations.csv', 'cola-de-reservas.csv');
 }
 
 /** Human wording for the refusal codes LoanPolicy can return. */

@@ -199,7 +199,7 @@ public class LoanService {
                 where l.returned_at is null and l.due_at < ?
                 order by l.due_at
                 """,
-                (rs, n) -> new OverdueCsv.Row(
+                (rs, n) -> OverdueCsv.Row.overdue(
                         rs.getString("full_name"), rs.getString("email"),
                         rs.getString("title"), rs.getString("code"),
                         rs.getTimestamp("due_at").toInstant().toString(),
@@ -207,8 +207,30 @@ public class LoanService {
                 java.sql.Timestamp.from(startOfToday()));
     }
 
-    @Transactional(readOnly = true)
-    public LoanDtos.SettingsSummary settingsSummary() {
+/**
+ * Who is waiting for what, in the order they arrived.
+ *
+ * <p>A screen can show "Rayuela" five times and tell the desk nothing; a
+ * spreadsheet can say "call this person about this book first".
+ */
+@Transactional(readOnly = true)
+public List<OverdueCsv.Row> reservationQueue() {
+    return jdbc.query("""
+            select u.full_name, u.email, b.title,
+                   row_number() over (partition by b.id order by r.created_at) as position,
+                   current_date - r.created_at::date as days_waiting
+            from reservations r
+            join users u on u.id = r.user_id
+            join books b on b.id = r.book_id
+            order by b.title, position
+            """,
+            (rs, n) -> OverdueCsv.Row.queue(
+                    rs.getString("full_name"), rs.getString("email"),
+                    rs.getString("title"), rs.getInt("position"), rs.getInt("days_waiting")));
+}
+
+@Transactional(readOnly = true)
+public LoanDtos.SettingsSummary settingsSummary() {
         var settings = settings();
         return new LoanDtos.SettingsSummary(settings.loanDays().toDays() > 0
                 ? Math.toIntExact(settings.loanDays().toDays()) : 0,
@@ -413,16 +435,23 @@ public class LoanService {
                 .map(this::reservationSummary).toList();
     }
 
-    @Transactional(readOnly = true)
+@Transactional(readOnly = true)
     public List<LoanDtos.ReservationSummary> allReservations() {
-        return jdbc.query("""
-                select r.id, r.book_id, b.title, r.created_at, r.fulfilled_at, r.cancelled_at
+        var rows = jdbc.query("""
+                select r.id, r.book_id, b.title, r.created_at, r.fulfilled_at, r.cancelled_at,
+                       r.user_id,
+                       (select count(*) from reservations r2
+                         where r2.book_id = r.book_id and r2.created_at <= r.created_at
+                           and r2.fulfilled_at is null and r2.cancelled_at is null) as place
                 from reservations r join books b on b.id = r.book_id
                 order by r.created_at
                 """, (rs, n) -> new LoanDtos.ReservationSummary(
                         rs.getLong("id"), rs.getLong("book_id"), rs.getString("title"), null,
                         rs.getTimestamp("created_at").toInstant(),
-                        rs.getTimestamp("fulfilled_at") == null && rs.getTimestamp("cancelled_at") == null));
+                        rs.getTimestamp("fulfilled_at") == null && rs.getTimestamp("cancelled_at") == null,
+                        rs.getLong("user_id"), null, null, rs.getInt("place")));
+        withReader(rows);
+        return rows;
     }
 
     // ── helpers ──────────────────────────────────────────────────────────────
@@ -536,12 +565,48 @@ public class LoanService {
                 loan.isOpen() && LoanPolicy.isOverdue(loan.getDueAt(), now));
     }
 
-    private LoanDtos.ReservationSummary reservationSummary(Reservation reservation) {
+private LoanDtos.ReservationSummary reservationSummary(Reservation reservation) {
         var title = jdbc.query("select title from books where id = ?",
                 (rs, n) -> rs.getString("title"), reservation.getBookId());
         return new LoanDtos.ReservationSummary(reservation.getId(), reservation.getBookId(),
                 title.isEmpty() ? null : title.get(0), null, reservation.getCreatedAt(),
-                reservation.isOpen());
+                reservation.isOpen(), reservation.getUserId(), null, null, placeOf(reservation));
+    }
+
+    /** Position in the line for this book, counting from the first arrival. */
+    private Integer placeOf(Reservation reservation) {
+        // The cast is not decoration: JdbcTemplate cannot type an Instant (it has
+        // bitten the import service and the overdue report already), while JPA can.
+        Integer before = jdbc.queryForObject(
+                "select count(*) from reservations where book_id = ? and created_at <= ?"
+                        + " and fulfilled_at is null and cancelled_at is null",
+                Integer.class, reservation.getBookId(),
+                java.sql.Timestamp.from(reservation.getCreatedAt()));
+        return before == null ? null : before;
+    }
+
+    /** Fills in who is waiting, for the desk view of the queue. */
+    private void withReader(List<LoanDtos.ReservationSummary> rows) {
+        if (rows.isEmpty()) {
+            return;
+        }
+        var readers = new java.util.HashMap<Long, String[]>();
+        for (var row : rows) {
+            if (row.readerId() != null && !readers.containsKey(row.readerId())) {
+                var who = jdbc.query("select full_name, email from users where id = ?",
+                        (rs, n) -> new String[] { rs.getString("full_name"), rs.getString("email") },
+                        row.readerId());
+                if (!who.isEmpty()) {
+                    readers.put(row.readerId(), who.get(0));
+                }
+            }
+        }
+        rows.replaceAll(row -> {
+            var who = row.readerId() == null ? null : readers.get(row.readerId());
+            return new LoanDtos.ReservationSummary(row.id(), row.bookId(), row.bookTitle(),
+                    row.coverHint(), row.createdAt(), row.open(), row.readerId(),
+                    who == null ? null : who[0], who == null ? null : who[1], row.place());
+        });
     }
 
     private static ApiException notFound(String code, String message) {

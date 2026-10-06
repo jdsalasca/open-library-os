@@ -35,13 +35,19 @@ public final class LoanDtos {
     }
 
     public record ReservationSummary(
-            Long id,
-            Long bookId,
-            String bookTitle,
-            String coverHint,
-            Instant createdAt,
-            boolean open) {
-    }
+Long id,
+   Long bookId,
+   String bookTitle,
+   String coverHint,
+   Instant createdAt,
+   boolean open,
+   // Who is waiting: the desk has to hand the book to somebody, and five rows
+   // saying the same title tell it nothing.
+   Long readerId,
+   String readerName,
+   String readerEmail,
+   Integer place) {
+}
 
     /** The policy settings the desk can see and understand. */
     public record SettingsSummary(int loanDays, int readerLimit, int maxRenewals) {

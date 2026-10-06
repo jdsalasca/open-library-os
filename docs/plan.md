@@ -855,6 +855,39 @@ QA, no contra un mock: «Respaldos al día: 6 guardados, el último hace 22 h».
 
 ---
 
+## Ronda 21 — La otra lista de llamadas: la cola de reservas
+
+**Objetivo:** cuando un libro vuelve hay alguien esperando y hay que
+llamarle. Esa lista solo existia en pantalla, y eran cinco filas iguales
+que decian «Rayuela, 5/10/2026» cinco veces. Al mostrador no le dice nada.
+
+- `GET /loans/reservations.csv` (`loans:operate`): libro, lector, correo, **puesto**
+  y dias esperando, ordenados por libro y por posicion. El orden del
+  fichero *es* el orden de trabajo.
+- La tarjeta del mostrador se agrupa por libro y muestra **quién** espera en cada
+  puesto, con el número de turno al lado.
+- `OverdueCsv` pasa a escribir los dos informes: la parte difícil no eran las
+  columnas, era el entrecomillado (coma en un titulo, acento en un nombre,
+  celda que Excel ejecuta como formula). Esa parte se escribe una vez y la
+  comparten.
+**El hueco de fondo era de datos, no de dibujo:** `ReservationSummary` no devolvía
+**quién** espera. La pantalla no podía agrupar porque no tenía con qué: cinco filas
+del mismo libro sin identidad. Ahora trae lector y puesto, calculados en la misma
+consulta.
+
+**La trampa de siempre, tercera vez:** `JdbcTemplate` no sabe tipar un
+`java.time.Instant` y devuelve 500. Ya salió en el import (ronda 9) y en el panel
+de vencidos (ronda 12). Esta vez el comentario explica el porqué en el sitio, para
+que el cuarto que aparezca sepa lo que cuesta.
+
+**Estado:** `done` (2026-10-05). Backend **324 tests verdes** (4 de la cola),
+frontend **107 verdes** (22 suites), `oxlint` 0 avisos, `tsc` limpio, axe **0
+serias/críticas**, smoke e2e **0 fallos**, sesión resistente al reinicio, 4
+servicios `healthy`. La descarga se comprobó en el navegador: `cola-de-reservas.csv`
+con BOM y contenido correcto.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);
@@ -867,21 +900,21 @@ QA, no contra un mock: «Respaldos al día: 6 guardados, el último hace 22 h».
 
 ## Siguiente
 
-Lo que queda por hacer, en orden de valor para quien usa la biblioteca:
+Lo que queda por hacer, en orden de valor para quien usa la biblioteca.
 
-1. **Aviso de vencimiento sin correo.** Un LECTOR no puede renovar lo vencido
-   (`LoanPolicy` lo impide, y con razón) y no hay forma de avisarle: la app no
-   manda correos a propósito. La vía sin servicios externos es una **página de
-   «mis días»** y quizá un resumen imprimible, no un SMTP.
-2. **CSV de vencidos para el mostrador.** Cuando hay que llamar a veinte personas
-   por teléfono, una hoja imprimible ahorra la pantalla. Los datos ya existen.
+1. ~~Aviso de vencimiento sin correo.~~ **Hecho en la ronda 17** (resguardo
+   imprimible) y en la 18 (CSV). Lo que falta, si algún día, es un aviso
+   automático, y eso ya no es posible sin un servicio externo: no es un SMTP.
+2. ~~CSV de vencidos para el mostrador.~~ **Hecho en la ronda 18.**
 3. ~~Limpiar `app_config` muerto.~~ **Hecho en la ronda 19.**
-4. **Las 187 violaciones de `markdownlint` en este mismo plan.** Cosmético, pero
+4. ~~La lista de la cola de reservas.~~ **Hecho en la ronda 21.**
+5. **Las 187 violaciones de `markdownlint` en este mismo plan.** Cosmético, pero
    es el documento que orienta el trabajo.
 
 Decisiones ya tomadas que no hay que volver a discutir:
 
-- La **migración siguiente es `V9`**: `V4` y `V5` no existen y no deben aparecer.
+- La **siguiente migración es `V10`**: `V9` ya existe (ronda 19, limpia la
+  configuración muerta). `V4` y `V5` no existen y no deben aparecer.
 - Los **scripts de captura no inventan estado**. Para ver algo raro en pantalla
   hay que prepararlo en la base, y el propio script lo dice en su cabecera.
 - **Nada de esperas fijas** en los scripts de QA: se espera al contenido

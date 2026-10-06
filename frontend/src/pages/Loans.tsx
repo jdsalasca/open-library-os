@@ -7,6 +7,7 @@ import {
   REFUSAL_TEXT,
 borrow,
   downloadOverdueCsv,
+  downloadReservationQueueCsv,
   listLoans,
   loanSettings,
   renewLoan,
@@ -14,6 +15,7 @@ borrow,
   returnLoan,
   type DeskReader,
   type Loan,
+  type Reservation,
   type LoanState,
 } from '../api/loans';
 import {
@@ -37,6 +39,19 @@ import { useScanner } from '../hooks/useScanner';
 import './Loans.scss';
 
 const SIZE = 15;
+
+/**
+ * Five identical rows of the same title tell the desk nothing. Grouped by book,
+ * with the person who is first in each line.
+ */
+function byBook(reservations: Reservation[]) {
+  const groups = new Map<string, Reservation[]>();
+  for (const reservation of reservations) {
+    const title = reservation.bookTitle ?? `Libro ${reservation.bookId}`;
+    groups.set(title, [...(groups.get(title) ?? []), reservation]);
+  }
+  return [...groups.entries()].sort((a, b) => a[0].localeCompare(b[0], 'es'));
+}
 
 /** The desk screen: big targets, one field to focus, the reader's card in view. */
 export function Loans() {
@@ -192,6 +207,7 @@ export function Loans() {
   ];
 
   const canOperate = Boolean(user?.authorities?.includes('loans:operate'));
+  const openReservations = (queue.data ?? []).filter((r) => r.open);
 
   // Calling twenty people works better on paper than on a table that only shows
   // fifteen rows at a time.
@@ -200,6 +216,14 @@ export function Loans() {
     onSuccess: () => setNotice({ tone: 'ok', text: 'CSV descargado.' }),
     onError: () =>
       setNotice({ tone: 'ko', text: 'No se pudo generar el CSV de vencidos.' }),
+  });
+
+  // The other call list: who is waiting for what, in order.
+  const queueCsv = useMutation({
+    mutationFn: downloadReservationQueueCsv,
+    onSuccess: () => setNotice({ tone: 'ok', text: 'Cola de reservas descargada.' }),
+    onError: () =>
+      setNotice({ tone: 'ko', text: 'No se pudo generar la cola de reservas.' }),
   });
 
   return (
@@ -327,36 +351,55 @@ actions={
           <CardHeader
             title="Cola de reservas"
             subtitle="Por orden de llegada"
-            actions={
+actions={
               queue.isLoading ? (
                 <LoadingState rows={1} />
               ) : (
-                <Badge tone="neutral">{queue.data?.filter((r) => r.open).length ?? 0}</Badge>
+                <div className="loans__queue-actions">
+                  <Badge tone="neutral">{openReservations.length}</Badge>
+                  {openReservations.length > 0 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      loading={queueCsv.isPending}
+                      onClick={() => queueCsv.mutate()}
+                    >
+                      Descargar cola (CSV)
+                    </Button>
+                  )}
+                </div>
               )
             }
           />
           <CardBody>
-            {queue.data?.filter((r) => r.open).length === 0 && (
+            {openReservations.length === 0 && (
               <EmptyState
                 title="Nadie espera"
                 description="No hay reservas pendientes."
                 icon="inbox"
               />
             )}
-            {queue.data && queue.data.filter((r) => r.open).length > 0 && (
-              <ol className="loans__waiting">
-                {queue.data
-                  .filter((r) => r.open)
-                  .map((reservation, index) => (
-                    <li key={reservation.id}>
-                      <span className="loans__place">{index + 1}</span>
-                      <span className="loans__book">{reservation.bookTitle ?? `Libro ${reservation.bookId}`}</span>
-                      <span className="loans__muted">
-                        {new Date(reservation.createdAt).toLocaleDateString('es-ES')}
-                      </span>
-                    </li>
-                  ))}
-              </ol>
+{queue.data && openReservations.length > 0 && (
+              <ul className="loans__waiting">
+                {byBook(openReservations).map(([title, people]) => (
+                  <li key={title} className="loans__waiting-book">
+                    <span className="loans__book">{title}</span>
+                    <ol className="loans__waiting-people">
+                      {people.map((person, index) => (
+                        <li key={person.id}>
+                          <span className="loans__place">{index + 1}</span>
+                          <span className="loans__person">
+                            {person.readerName ?? person.readerEmail ?? `Lector ${person.readerId}`}
+                          </span>
+                          <span className="loans__muted">
+                            {new Date(person.createdAt).toLocaleDateString('es-ES')}
+                          </span>
+                        </li>
+                      ))}
+                    </ol>
+                  </li>
+                ))}
+              </ul>
             )}
           </CardBody>
         </Card>

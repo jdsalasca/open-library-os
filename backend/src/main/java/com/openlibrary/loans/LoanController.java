@@ -75,6 +75,19 @@ public class LoanController {
  *
  * <p>Staff only, and it counts other people's debts.
  */
+    /**
+ * The reservation queue as a spreadsheet: who to call, about which book, in which
+ * order. The other half of the overdue list.
+ */
+    @GetMapping(value = "/reservations.csv", produces = "text/csv;charset=UTF-8")
+    public ResponseEntity<byte[]> reservationQueueCsv() {
+        var csv = OverdueCsv.renderQueue(loans.reservationQueue());
+        return ResponseEntity.ok()
+                .header(HttpHeaders.CONTENT_DISPOSITION,
+                        "attachment; filename=\"cola-de-reservas.csv\"")
+                .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
+
     @GetMapping(value = "/overdue.csv", produces = "text/csv;charset=UTF-8")
     public ResponseEntity<byte[]> overdueCsv() {
         var csv = OverdueCsv.render(loans.overdueForCalls());
