@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useRef, useState } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 
 import { ApiError } from '../api/client';
@@ -6,8 +6,10 @@ import {
   ROLE_LABEL,
   ROLES,
   createUser,
+  importReaders,
   listUsers,
   updateUser,
+  type ReaderImportReport,
   type Role,
 } from '../api/users';
 import {
@@ -186,7 +188,93 @@ export function Users() {
             </CardBody>
           </Card>
         )}
+
+        {canWrite && <ReaderImport onDone={() => void users.refetch()} />}
       </div>
     </div>
+  );
+}
+
+/**
+ * The day a library moves to self-hosting: eight hundred members already exist, on a
+ * spreadsheet. Every imported account is a reader who chooses their own password on
+ * first login, so the sheet never carries one and the desk never distributes one.
+ */
+export function ReaderImport({ onDone }: { onDone: () => void }) {
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const [report, setReport] = useState<ReaderImportReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = useMutation({
+    mutationFn: async (file: File) => importReaders(await file.text()),
+    onSuccess: (result) => {
+      setReport(result);
+      setError(null);
+      onDone();
+    },
+    onError: (failure) =>
+      setError(failure instanceof ApiError ? failure.message : String(failure)),
+  });
+
+  return (
+    <Card className="users__import">
+      <CardHeader
+        title="Cargar la lista de socios de una hoja de calculo"
+        subtitle="Columnas: nombre y correo. Cada persona entra con una clave que ella misma elige."
+      />
+      <CardBody>
+        <p className="users__import-hint">
+          Las cuentas que ya existen se dejan como estan, con su contrasena. Las que
+          llegan nuevas tendran que cambiar una clave provisional en su primer acceso,
+          asi que no hay que repartir ninguna.
+        </p>
+        <label className="users__import-file">
+          <input
+            ref={fileInput}
+            type="file"
+            accept="text/csv,.csv"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                setChosen(file.name);
+                send.mutate(file);
+              }
+              // Otherwise choosing the same file again does nothing at all.
+              if (fileInput.current) fileInput.current.value = '';
+            }}
+          />
+          <span className="users__import-button">
+            {chosen ? 'Cambiar el fichero' : 'Elegir el CSV'}
+          </span>
+          <span className="users__import-name">{chosen ?? 'Ningun fichero elegido todavia'}</span>
+        </label>
+
+        {error && (
+          <p className="users__import-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {report && (
+          <div className="users__import-report" role="status">
+            <h3 className="users__import-report-title">
+              {report.created} {report.created === 1 ? 'cuenta nueva' : 'cuentas nuevas'}
+              {report.alreadyThere > 0 ? `, ${report.alreadyThere} ya existian` : ''}
+              {report.failed > 0 ? `, ${report.failed} sin guardar` : ''}
+            </h3>
+            {report.problems.length > 0 && (
+              <ul className="users__import-problems">
+                {report.problems.map((problem) => (
+                  <li key={problem.line}>
+                    Linea {problem.line}: {problem.reason}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </CardBody>
+    </Card>
   );
 }

@@ -948,6 +948,99 @@ ejemplares** en la segunda pasada.
 
 ---
 
+## Ronda 23 - Los ochocientos socios que ya tienes
+
+**Objetivo:** una biblioteca que migra a autoalojada tiene ochocientos socios
+registrados en otro sistema. El unico modo de meterlos hoy es uno por uno, y eso
+es un trabajo de dos dias que nadie va a hacer.
+
+- `POST /users/import` (`users:write`): lee nombre y correo de un CSV, acepta `,`
+  o `;` y cabeceras en espanol o ingles.
+- El informe separa **nuevas**, **ya existen** y **sin guardar**, con el numero
+  de linea de cada fallo. Reimportar el mismo roster no es un error: es
+  "798 nuevas, 2 ya existian".
+- Una cuenta existente se deja **completamente** intacta, con su nombre y su
+  contrasena. Un test lo comprueba por diferencia, no por valores fijos, porque
+  otras clases de test renombran los lectores de prueba.
+
+### Las dos decisiones que hacen segura esta herramienta
+
+**La hoja no lleva contrasenas y esta clase no inventa una que haya que repartir.**
+Cada cuenta llega con una clave aleatoria y `must_change_password`, que el
+`PasswordGate` ya obliga a cambiar: con ella no se llega a la API y el dueno elige
+la suya en el primer acceso. Una hoja de ochocientas cuentas con una clave
+compartida seria un incidente de seguridad con un boton.
+
+**Toda cuenta importada es LECTOR.** Leer el rol del fichero significaria que una
+columna suelta podria fabricar un administrador, y esta es exactamente la
+herramienta que alguien usaria para hacerlo sin querer. Las cuentas de personal
+se crean a mano, donde la decision es deliberada. Un test manda una hoja con
+`rol=ADMINISTRADOR` y comprueba que la cuenta sale como lector.
+
+### Un hueco que salio de la captura, no del test
+
+La fila sin correo salia en el informe asi:
+
+    Linea 6: Cannot invoke "java.sql.SQLException.getMessage()" because
+    "java.sql.SQLException..." is null
+
+Una celda vacia llega a Postgres como violacion de NOT NULL, y el mensaje que
+vuelve nombra una columna y una clase del driver. Eso no lo puede arreglar un
+bibliotecario. Es el mismo patron que el `Instant` de la ronda 9: la base de datos
+habla su idioma y el informe tiene que traducirlo. Ahora dice **falta el correo**,
+y lo mismo con el nombre. Un test afirma que el cuerpo **no** contiene
+`SQLException`, para que nadie lo revierta.
+
+Tambien: "1 cuentas nuevas" en el encabezado. Corregido, porque un encabezado mal
+conjugado hace que toda la pantalla parezca sin terminar.
+
+**Estado:** `done` (2026-10-05). Backend **346 tests verdes** (11 de la
+importacion), frontend **113 verdes** (24 suites), `tsc` limpio, `oxlint` 0
+avisos, axe **0 violaciones**, smoke e2e **0 fallos**, sesion resistente al
+reinicio, 4 servicios `healthy`. En el navegador: 1 cuenta nueva, 3 que ya
+existian, 2 filas rechazadas con su linea, y un intento de entrar con la clave
+ajena devuelve **403**.
+
+## Ronda 24 - Publicar el repositorio: que se lea antes de confiar
+
+Publicar es el punto en que el codigo deja de ser tuyo y pasa a ser de cualquiera.
+Antes de subirlo se reviso el historial entero, no solo los ficheros de hoy.
+
+### Lo que se encontro
+
+- **Sin secretos.** Ni claves, ni `.env` real (solo `.env.example`, con
+  `change-me-in-production`), ni tokens, ni certificados. Sin correos de
+  terceros: todos son `@example.org` o `@demo.test`.
+- **Sin datos personales.** Solo hay rutas locales dentro de los logs de
+  evidencia, del propio repositorio en su propia maquina.
+- **Sin IPs internas** mas alla de una de un test.
+- **16,8 MiB** de historial y ningun fichero mayor de 600 KB.
+
+### El hueco que de verdad importaba
+
+El README **no decia con que clave se entra la primera vez**. Para un
+repositorio publico eso no es un detalle: cualquiera que clone y ejecute el
+comando recibe `admin@local` con una contrasena que todo el mundo puede leer.
+Ahora la seccion del primer ingreso dice cual es, y sobre todo dice **que hace el
+programa con ella**: te lleva a cambiarla y la API queda cerrada hasta que lo
+hagas (`PasswordGateFilter`, 403 `password_change_required`, con test que lo
+demuestra). Es una barrera, no un aviso.
+
+Tambien se documentaron `OLO_ADMIN_EMAIL` y `OLO_ADMIN_PASSWORD` para quien
+quiera empezar con otras, sabiendo que la cuenta inicial solo se crea si no hay
+ninguna: el programa no resurrecta ni sobrescribe una cuenta que ya existe tras
+un reinicio o una restauracion.
+
+Y una linea sobre las credenciales de los scripts (`admin@local`,
+`lector@local`): son de los tests y del auditor de accesibilidad, y solo existen
+en una base de datos de pruebas efimera. Sin esa frase, un lector razonable
+asumiria que son usuarios reales.
+
+**Estado:** `done` (2026-10-05). El README grew en 18 lineas y ninguna
+violacion de `markdownlint`.
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);

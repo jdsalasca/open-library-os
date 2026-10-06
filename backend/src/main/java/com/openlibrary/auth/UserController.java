@@ -13,6 +13,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.ResponseStatus;
 import org.springframework.web.bind.annotation.RestController;
@@ -25,11 +26,14 @@ import java.util.Map;
 @RequestMapping("/users")
 public class UserController {
 
+    private final ReaderCsvImport readers;
     private final UserRepository users;
     private final PasswordEncoder passwords;
     private final AuditService audit;
 
-    public UserController(UserRepository users, PasswordEncoder passwords, AuditService audit) {
+    public UserController(UserRepository users, PasswordEncoder passwords, AuditService audit,
+            ReaderCsvImport readers) {
+        this.readers = readers;
         this.users = users;
         this.passwords = passwords;
         this.audit = audit;
@@ -62,6 +66,32 @@ public class UserController {
                 Map.of("email", user.getEmail(), "role", user.getRole().name()));
 
         return AuthController.toProfile(user);
+    }
+
+    /**
+     * The roster a migrating library already has on a spreadsheet.
+     *
+     * <p>Body is the file as text so the browser needs no multipart parser. Every
+     * account arrives as a LECTOR with a password its owner must choose: see
+     * {@link ReaderCsvImport} for why the role and the password are not read from
+     * the file.
+     */
+    @PostMapping("/import")
+    public ReaderCsvImport.Report importReaders(
+            @RequestHeader("Content-Type") String contentType,
+            @RequestBody String csv) {
+        if (!contentType.toLowerCase(java.util.Locale.ROOT).contains("csv")) {
+            throw new ApiException(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "csv_expected",
+                    "El fichero tiene que ser un CSV.");
+        }
+        return readers.importCsv(csv, users.findByEmailIgnoreCase(currentEmail())
+                .map(User::getId).orElse(null));
+    }
+
+    private String currentEmail() {
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext()
+                .getAuthentication();
+        return auth == null ? null : auth.getName();
     }
 
     @PutMapping("/{id}")

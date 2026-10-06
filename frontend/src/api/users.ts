@@ -66,3 +66,19 @@ export function changeRole(id: number, role: Role) {
 }
 
 export type { Problem };
+
+/**
+ * The roster a migrating library already has. Sent as text/csv because that is what
+ * FileReader hands over; every account arrives as a reader that must choose its own
+ * password on first login.
+ */
+export type ReaderImportReport = {
+  created: number;
+  alreadyThere: number;
+  failed: number;
+  problems: { line: number; reason: string }[];
+};
+
+export function importReaders(csv: string) {
+  return api.postRaw<ReaderImportReport>('/users/import', csv, 'text/csv');
+}

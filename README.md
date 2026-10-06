@@ -21,6 +21,9 @@ sin soporte de terceros.
   historial.
 - **Tus datos**: exporta la biblioteca entera a un JSON y restáurala donde
   quieras. Tus datos son tuyos.
+- **Cargar desde una hoja de calculo**: el catalogo (libros, autores, editoriales,
+  categorias y ejemplares) y la lista de socios entran desde un CSV, linea a
+  linea, y el informe dice que filas se guardaron y cuales hay que corregir.
 
 ---
 
@@ -38,6 +41,30 @@ Abre <http://localhost:8080>.
 
 La primera vez Docker construye las imagenes (2-4 minutos). A partir de ahi,
 `docker compose up -d` levanta todo en segundos.
+
+### El primer ingreso
+
+| | |
+| --- | --- |
+| Correo | `admin@local` |
+| Contrasena | `ChangeMe!2026` |
+
+**La aplicacion no te deja hacer nada con esa clave.** Al entrar te lleva
+obligatoriamente a cambiarla, y la API queda cerrada hasta que lo hagas
+(`PasswordGateFilter`). Es una barrera, no un aviso: un despliegue olvidado
+no queda accesible con una contrasena que todo el mundo puede leer en este
+README.
+
+Para empezar con otras credenciales, ponlas **antes** del primer arranque, o
+la cuenta inicial ya existira y el programa no la tocara:
+
+```bash
+OLO_ADMIN_EMAIL=tu@correo OLO_ADMIN_PASSWORD=una-clave-larga docker compose up -d
+```
+
+Los datos de prueba que usan los scripts (`admin@local`, `lector@local`,
+`bibliotecario@local`) son solo de los tests y del auditor de accesibilidad:
+existen unicamente en una base de datos de pruebas efimera.
 
 Para cambiar puertos o credenciales:
 
