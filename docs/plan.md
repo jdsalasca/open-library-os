@@ -1039,6 +1039,13 @@ asumiria que son usuarios reales.
 **Estado:** `done` (2026-10-05). El README grew en 18 lineas y ninguna
 violacion de `markdownlint`.
 
+Publicado en <https://github.com/jdsalasca/open-library-os> con las 24 rondas
+y su historial. La CI del propio repo salio **verde en GitHub Actions**: backend
+con JDK 25 y Testcontainers en 4m11s, frontend con Node 24 en 20s. Eso prueba
+algo que la maquina local no podia: que el repositorio compila y pasa sus 459
+tests en un Linux limpio, con las versiones que instala el runner y no las que
+tengo yo instaladas.
+
 ---
 
 ## Métricas de calidad (revisadas cada ronda)

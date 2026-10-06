@@ -1,0 +1,10 @@
+https://github.com/jdsalasca/open-library-os (publico, rama develop)
+--- CI en GitHub Actions, run 37413973825 ---
+Backend (JDK 25, Testcontainers): success in 4m11s
+Frontend (Node 24): success in 20s
+--- auditoria previa a publicar ---
+sin .env real (solo .env.example con change-me-in-production)
+sin tokens, sin claves privadas, sin certificados
+sin correos de terceros: todos @example.org o @demo.test
+historial: 16,8 MiB, ningun fichero mayor de 600 KB
+licencia AGPL-3.0 presente
