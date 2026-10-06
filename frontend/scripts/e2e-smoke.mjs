@@ -18,7 +18,9 @@ import path from 'node:path';
 
 const BASE = process.argv[2] ?? process.env.BASE_URL ?? 'http://127.0.0.1:8090';
 // Screenshots belong in the repo's docs, not inside frontend/.
-const SHOTS = path.resolve('../docs/screenshots/round-14');
+// Its own directory: this script used to write into round-14, so every run quietly
+// replaced that round's evidence with fresh screenshots. Evidence is a deliverable.
+const SHOTS = path.resolve('../docs/screenshots/e2e-smoke');
 const BOOK_TITLE = 'La ruta delFFFFF';
 const ADMIN = { email: 'admin@local', password: 'NuevaClave2026' };
 const stamp = Date.now();

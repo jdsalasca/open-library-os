@@ -70,6 +70,11 @@ public class BookAuthor {
         return position;
     }
 
+    /** Reordering the credits must not mean deleting and re-inserting the rows. */
+    public void setPosition(int position) {
+        this.position = position;
+    }
+
     @Override
     public boolean equals(Object other) {
         if (this == other) {

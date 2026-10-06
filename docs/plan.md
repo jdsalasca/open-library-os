@@ -888,6 +888,66 @@ con BOM y contenido correcto.
 
 ---
 
+## Ronda 22 - El primer dia de verdad: cargar el catalogo que ya tienes
+
+**Objetivo:** el dia uno de una biblioteca autoalojada no es un catalogo
+vacio: son trescientos titulos que alguien ya posee, en una hoja de calculo.
+Restaurar una copia de seguridad no resuelve eso, porque no tienen copia de
+seguridad: tienen un Excel.
+
+- `POST /catalog/import` (`catalog:write`): lee un CSV y crea libros, autores,
+  editorial, categorias y ejemplares. Acepta `,` o `;`, cabeceras en espanol o
+  ingles, y acentos.
+- El informe dice **nuevos, actualizados, ejemplares creados y sin guardar**, y
+  cada fila rechazada sale con **su numero de linea**. "Tres filas fallaron" no
+  sirve para nadie que tiene la hoja abierta en otra ventana.
+- Una fila mala no tira las demas. Cada fila va en su propia transaccion, asi
+  que un ISBN invalido en la 47 no deshace las doscientas anteriores.
+
+**Cero logica de dominio nueva, a proposito.** Cada fila se convierte en el
+mismo `UpsertBookRequest` que manda el formulario y pasa por el mismo
+servicio. El importador no puede desviarse del formulario: un ISBN que el
+formulario rechaza, lo rechaza la importacion con el mismo mensaje.
+
+### Dos bugs de fondo que salieron por el camino
+
+**Guardar un libro sin tocarlo era un 500.** `Book.setAuthors` borraba los
+creditos y los reinsertaba; como `book_authors` es UNIQUE en
+`(book_id, author_id, role)` y Hibernate manda los INSERT antes que los
+DELETE, el insert choca contra su propia restriccion. Abrir un libro para
+corregir una errata y volver a guardar reventaba. El test que existia solo
+cubria el caso de *cambiar* los autores, que es justo por lo que esto siguio
+escondido. Ahora `setAuthors` **distingue** en vez de reconstruir, y
+`setCategories` tenia la misma trampa. Test nuevo:
+`savingTheSameBookTwiceDoesNotBite`.
+
+**El `failed` no salia en el informe.** Era un metodo derivado del record, y
+Jackson serializa componentes, no metodos: el informe llegaba sin su numero
+mas importante. Ahora es un componente de verdad, construido en un unico sitio
+para que no puedan discrepar el numero y la lista.
+
+### Y uno que encontre yo, que es el motivo de la ronda
+
+La columna `copias` **sumaba** en cada importacion. Los libros no se duplicaban
+al reimportar, pero los ejemplares si: subir el mismo fichero dos veces
+imprimia otra etiqueta por ejemplar, y nadie se enteraba hasta un recuento de
+inventario. Ahora `copias` describe lo que la biblioteca tiene y solo crea la
+diferencia, que es lo que hace segura la reimportacion. Dos tests lo fijan.
+
+**Estado:** `done` (2026-10-05). Backend **334 tests verdes** (9 de la
+importacion), frontend **110 verdes** (23 suites), `tsc` limpio, `oxlint` 0
+avisos, axe **0 violaciones**, smoke e2e **0 fallos**, sesion
+resistente al reinicio, 4 servicios `healthy`. Verificado en el navegador con
+un CSV de verdad: 3 libros guardados, 2 filas rechazadas con su linea, y **0
+ejemplares** en la segunda pasada.
+
+> El `401` que sale en la consola al abrir `/entrar` es la pregunta "¿tengo
+> sesion?" que la app hace antes de que nadie pueda tenerla. La captura lo
+> trata como `null` y sigue como invitado, que es lo correcto. Adivinarlo por
+> una cookie seria peor. **No es un defecto: no lo vuelva a investigar.**
+
+---
+
 ## Métricas de calidad (revisadas cada ronda)
 
 - Backend: tests verdes, 0 warnings de compilación, `ruff`-style cleanliness no aplica (Java);
@@ -908,7 +968,15 @@ Lo que queda por hacer, en orden de valor para quien usa la biblioteca.
 2. ~~CSV de vencidos para el mostrador.~~ **Hecho en la ronda 18.**
 3. ~~Limpiar `app_config` muerto.~~ **Hecho en la ronda 19.**
 4. ~~La lista de la cola de reservas.~~ **Hecho en la ronda 21.**
-5. **Las 187 violaciones de `markdownlint` en este mismo plan.** Cosmético, pero
+5. **Cargar el catalogo de una hoja de calculo.** **Hecho en la ronda 22.**
+6. **Cargar la lista de socios de una hoja de calculo.** Es el mismo problema
+   un dia despues: una biblioteca que migra tiene ochocientos socios y no hay
+   forma de meterlos salvo de uno en uno. La maquinaria ya existe (el bucle de
+   filas con aislamiento por fila y su informe), asi que esta ronda deberia ser
+   mucho mas corta que la 22.
+7. **Exportar el catalogo a CSV.** Si se puede entrar, se debe poder salir. El
+   CSV de entrada sirve como formato de ida y vuelta.
+8. **Las 187 violaciones de `markdownlint` en este mismo plan.** Cosmetico, pero
    es el documento que orienta el trabajo.
 
 Decisiones ya tomadas que no hay que volver a discutir:

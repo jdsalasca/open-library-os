@@ -118,3 +118,20 @@ export function listCategories() {
 export function authorNames(book: BookSummary | BookDetail): string {
   return book.authors.map((a) => a.name).join(', ');
 }
+
+/** What the import did, and which lines it could not read. */
+export type ImportReport = {
+  created: number;
+  updated: number;
+  copiesAdded: number;
+  failed: number;
+  problems: { line: number; reason: string }[];
+};
+
+/**
+ * The spreadsheet a real library arrives with. Sent as text/csv because that is what
+ * FileReader gives us; the server needs no multipart parser.
+ */
+export function importCatalogue(csv: string) {
+  return api.postRaw<ImportReport>('/catalog/import', csv, 'text/csv');
+}

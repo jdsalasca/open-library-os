@@ -60,3 +60,94 @@
 .catalog__hint {
   margin-top: var(--space-4);
 }
+.catalog__import {
+  margin-top: var(--space-5);
+}
+
+// Same affordance as the backup import: a label that reads as a button, because a
+// bare file input is a mystery to anybody who did not write it.
+.catalog__import-file {
+  display: flex;
+  align-items: center;
+  gap: var(--space-3);
+  flex-wrap: wrap;
+  padding: var(--space-2);
+  border: 1px dashed var(--border-strong);
+  border-radius: var(--radius-md);
+  cursor: pointer;
+
+  input[type='file'] {
+    @include visually-hidden;
+  }
+
+  &:focus-within {
+    border-color: var(--accent);
+    box-shadow: var(--shadow-focus);
+  }
+}
+
+.catalog__import-button {
+  padding: var(--space-2) var(--space-3);
+  border: 1px solid var(--border-strong);
+  border-radius: var(--radius-md);
+  background: var(--surface-raised);
+  color: var(--text);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-medium);
+}
+
+.catalog__import-name {
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
+  word-break: break-all;
+}
+
+.catalog__import-hint {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
+}
+
+.catalog__import-error {
+  margin: var(--space-3) 0 0;
+  color: var(--danger);
+  font-size: var(--text-sm);
+}
+
+.catalog__import-report {
+  margin-top: var(--space-4);
+  padding-top: var(--space-4);
+  border-top: 1px solid var(--border);
+}
+
+.catalog__import-report-title {
+  margin: 0 0 var(--space-3);
+  font-size: var(--text-sm);
+  font-weight: var(--weight-semibold);
+  color: var(--success);
+}
+
+// Four numbers, so they sit in a row on a desk and stack on a phone.
+.catalog__import-counts {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-2) var(--space-5);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  color: var(--text-subtle);
+
+  strong {
+    color: var(--text);
+    font-size: var(--text-base);
+    font-variant-numeric: tabular-nums;
+  }
+}
+
+.catalog__import-problems {
+  margin: var(--space-4) 0 0;
+  padding-left: var(--space-4);
+  font-size: var(--text-sm);
+  color: var(--danger);
+}

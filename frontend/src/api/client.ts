@@ -46,16 +46,20 @@ function readCookie(name: string): string | undefined {
 type RequestOptions = {
   method?: 'GET' | 'POST' | 'PUT' | 'PATCH' | 'DELETE';
   body?: unknown;
-  /** Already-serialised JSON text, sent verbatim instead of being stringified. */
+  /** Already-serialised text, sent verbatim instead of being stringified. */
   rawBody?: string;
+  /** For raw bodies that are not JSON: a spreadsheet arrives as text/csv. */
+  contentType?: string;
   signal?: AbortSignal;
 };
 
 async function request<T>(path: string, options: RequestOptions = {}): Promise<T> {
-  const { method = 'GET', body, rawBody, signal } = options;
+  const { method = 'GET', body, rawBody, contentType, signal } = options;
 
   const headers: Record<string, string> = { Accept: 'application/json' };
-  if (body !== undefined || rawBody !== undefined) headers['Content-Type'] = 'application/json';
+  if (body !== undefined || rawBody !== undefined) {
+    headers['Content-Type'] = contentType ?? 'application/json';
+  }
 
   const csrf = readCookie(CSRF_COOKIE);
   if (csrf && method !== 'GET') headers[CSRF_HEADER] = csrf;
@@ -99,6 +103,9 @@ export const api = {
   /** Raw JSON text, for a document that is already serialised (an export). */
   postJson: <T>(path: string, rawBody: string) =>
     request<T>(path, { method: 'POST', rawBody }),
+  /** Raw text in another format: a spreadsheet is not JSON. */
+  postRaw: <T>(path: string, rawBody: string, contentType: string) =>
+    request<T>(path, { method: 'POST', rawBody, contentType }),
   delete: <T>(path: string) => request<T>(path, { method: 'DELETE' }),
   /**
    * Downloads a file the server built. Goes through fetch rather than a plain

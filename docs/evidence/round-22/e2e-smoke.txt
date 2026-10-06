@@ -1,0 +1,30 @@
+
+Escena en http://127.0.0.1:8090
+  1. sesion de administrador abierta en /
+     ok   el administrador sale de la pantalla de acceso
+     ok   libro de prueba creado (ok)
+     ok   lector de prueba creado (201 {"id":340,"email":"e2e.1791253444519@demo.test","fullName":"Elena Ib├í├▒ez","role":"LECTOR","active":true,"mustChangePassword":false,"authorities":["catalog:read","loans:self"]})
+     ok   ejemplar de prueba creado (201)
+  2. ejemplar OL-0000000165 para Elena Ib├í├▒ez
+
+Mostrador
+     ok   escribir "iba├▒" encuentra a Elena Ib├í├▒ez sin teclear la ├▒
+     ok   el resultado muestra el nombre completo con su acento
+     ok   queda elegido
+     ok   el ejemplar aparece listo para prestar
+     ok   el ejemplar OL-0000000165 aparece en los prestamos activos del mostrador
+
+El rincon del lector
+  3. sesion de lector abierta en /
+     ok   el lector ve el libro que se le prest├│ (La ruta delFFFFF)
+     ok   el pr├®stamo aparece en su lista, no solo en el texto
+     ok   el lector ve el bot├│n de renovar en su rincon
+     ok   el lector renueva su propio pr├®stamo
+     ok   la biblioteca lo confirma en pantalla ("Renovado hasta el 2/11/2026.")
+     ok   la fecha se mueve (19/10/2026 -> Renovado hasta el 2/11/2026.)
+
+Permisos en la practica
+     ok   un LECTOR no puede llegar al mostrador (acabo en /)
+     ok   sin excepciones de JS ()
+
+OK 3 pasos, 0 fallos

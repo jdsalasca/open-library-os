@@ -1,0 +1,4 @@
+[2m Test Files [22m [1m[32m23 passed[39m[22m[90m (23)[39m
+[2m      Tests [22m [1m[32m110 passed[39m[22m[90m (110)[39m
+[2m   Duration [22m 38.51s[2m (environment 62%, setup 11%, import 10%, tests 9%, transform 8%)[22m
+tsc exit=0

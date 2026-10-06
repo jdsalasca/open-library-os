@@ -1,19 +1,23 @@
-import { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
+import { useRef, useState } from 'react';
+import { useMutation, useQuery } from '@tanstack/react-query';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 
 import {
   authorNames,
+  importCatalogue,
   listCategories,
   listPublishers,
   searchBooks,
   type BookQuery,
   type BookSummary,
+  type ImportReport,
 } from '../api/catalog';
 import {
   Badge,
   Button,
   Card,
+  CardBody,
+  CardHeader,
   DataTable,
   EmptyState,
   ErrorState,
@@ -23,6 +27,7 @@ import {
   Pagination,
   type Column,
 } from '../components';
+import { ApiError } from '../api/client';
 import { useAuth } from '../auth/auth-context';
 import './Catalog.scss';
 
@@ -235,6 +240,104 @@ export function Catalog() {
           </Badge>
         </p>
       )}
+
+      {can('catalog:write') && (
+        <CatalogueImport onImported={() => void books.refetch()} />
+      )}
     </div>
+  );
+}
+
+/**
+ * The day a self-hosted library starts: three hundred titles somebody already owns.
+ * Restoring a backup does not help with that, so the spreadsheet gets its own door.
+ */
+export function CatalogueImport({ onImported }: { onImported: () => void }) {
+  const fileInput = useRef<HTMLInputElement | null>(null);
+  const [chosen, setChosen] = useState<string | null>(null);
+  const [report, setReport] = useState<ImportReport | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const send = useMutation({
+    mutationFn: async (file: File) => importCatalogue(await file.text()),
+    onSuccess: (result) => {
+      setReport(result);
+      setError(null);
+      onImported();
+    },
+    onError: (failure) => setError(failure instanceof ApiError ? failure.message : String(failure)),
+  });
+
+  return (
+    <Card className="catalog__import">
+      <CardHeader
+        title="Cargar el catalogo de una hoja de calculo"
+        subtitle="Columnas: titulo, autor, isbn13, editorial, anio, idioma, categoria y copias."
+      />
+      <CardBody>
+        <p className="catalog__import-hint">
+          Los libros con el mismo ISBN se actualizan en vez de duplicarse, y cada linea
+          se guarda por separado: una fila con un ISBN malo no tira las demas.
+        </p>
+        <label className="catalog__import-file">
+          <input
+            ref={fileInput}
+            type="file"
+            accept="text/csv,.csv"
+            onChange={(event) => {
+              const file = event.target.files?.[0];
+              if (file) {
+                setChosen(file.name);
+                send.mutate(file);
+              }
+              // Otherwise choosing the same file again does nothing at all.
+              if (fileInput.current) fileInput.current.value = '';
+            }}
+          />
+          <span className="catalog__import-button">
+            {chosen ? 'Cambiar el fichero' : 'Elegir el CSV'}
+          </span>
+          <span className="catalog__import-name">{chosen ?? 'Ningun fichero elegido todavia'}</span>
+        </label>
+
+        {error && (
+          <p className="catalog__import-error" role="alert">
+            {error}
+          </p>
+        )}
+
+        {report && (
+          <div className="catalog__import-report" role="status">
+            <h3 className="catalog__import-report-title">
+              {report.created + report.updated} libros guardados
+              {report.failed > 0 ? `, ${report.failed} sin guardar` : ''}
+            </h3>
+            <ul className="catalog__import-counts">
+              <li>
+                <strong>{report.created}</strong> nuevos
+              </li>
+              <li>
+                <strong>{report.updated}</strong> actualizados
+              </li>
+              <li>
+                <strong>{report.copiesAdded}</strong> ejemplares creados
+              </li>
+              <li>
+                <strong>{report.failed}</strong> sin guardar
+              </li>
+            </ul>
+            {report.problems.length > 0 && (
+              <ul className="catalog__import-problems">
+                {report.problems.map((problem) => (
+                  <li key={problem.line}>
+                    Linea {problem.line}: {problem.reason}
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        )}
+      </CardBody>
+    </Card>
   );
 }

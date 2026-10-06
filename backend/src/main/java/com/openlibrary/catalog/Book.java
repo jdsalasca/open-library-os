@@ -135,18 +135,37 @@ public class Book {
      * tracks the live instance, and swapping it makes Hibernate complain.
      */
     public void setAuthors(List<Author> ordered) {
-        this.authors.clear();
-        int position = 0;
-        for (Author author : ordered) {
-            this.authors.add(new BookAuthor(this, author, "AUTOR", position++));
+        var wanted = new ArrayList<BookAuthor>();
+        for (int i = 0; i < ordered.size(); i++) {
+            wanted.add(new BookAuthor(this, ordered.get(i), "AUTOR", i));
+        }
+
+        // Diff, do not clear and rebuild. Hibernate flushes the inserts before the
+        // orphan deletes, so re-inserting a credit that is already there trips the
+        // unique constraint on (book_id, author_id, role). Opening a book to fix a
+        // typo in the title and saving it again was a 500, and so was re-importing a
+        // catalogue. The kept rows keep their identity; only their order moves.
+        this.authors.removeIf(link -> !wanted.contains(link));
+        for (BookAuthor candidate : wanted) {
+            int at = this.authors.indexOf(candidate);
+            if (at < 0) {
+                this.authors.add(candidate);
+            } else {
+                this.authors.get(at).setPosition(candidate.getPosition());
+            }
         }
     }
 
     public void setCategories(Set<Category> categories) {
-        this.categories.clear();
+        var wanted = new ArrayList<BookCategory>();
         for (Category category : categories) {
-            this.categories.add(new BookCategory(this, category));
+            wanted.add(new BookCategory(this, category));
         }
+
+        // Same reason as the authors: book_categories is UNIQUE on
+        // (book_id, category_id) and the flush order would reject the insert.
+        this.categories.removeIf(link -> !wanted.contains(link));
+        this.categories.addAll(wanted.stream().filter(link -> !this.categories.contains(link)).toList());
     }
 
     /**

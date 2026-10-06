@@ -166,6 +166,12 @@ public class InventoryService {
 
     // ── Copies ──────────────────────────────────────────────────────────────
 
+    /** How many copies a title has. The catalogue import needs it to be idempotent. */
+    @Transactional(readOnly = true)
+    public long copiesOf(Long bookId) {
+        return copies.countByBookId(bookId);
+    }
+
     /**
      * Adds N copies of a book at once, because nobody stocks a shelf one label at
      * a time. The sequence lives in Postgres so two librarians never collide.

@@ -58,6 +58,17 @@ public final class HttpTestClient {
                 .POST(HttpRequest.BodyPublishers.ofString(jsonText)));
     }
 
+/**
+     * A body sent as-is with its own content type, for the formats a browser
+     * hands over as text: a spreadsheet, a JSON backup, an uploaded document.
+     */
+    public Result postRaw(String path, String body, String contentType) {
+        return send(HttpRequest.newBuilder(uri(path))
+                .header("Content-Type", contentType)
+                .header("X-XSRF-TOKEN", csrfToken())
+                .POST(HttpRequest.BodyPublishers.ofString(body)));
+    }
+
     public Result put(String path, Object body) {
         return send(write(HttpRequest.newBuilder(uri(path)), "PUT", body));
     }

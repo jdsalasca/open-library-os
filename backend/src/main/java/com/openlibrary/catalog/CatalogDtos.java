@@ -43,6 +43,8 @@ public record BookSummary(
             String isbn13) {
     }
 
+    /** Just enough of a book to say "this ISBN is already on the shelf". */
+    public record BookRef(Long id, String title) {}
     public record BookDetail(
             Long id,
             String title,

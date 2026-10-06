@@ -1,5 +1,6 @@
 package com.openlibrary.catalog;
 
+import com.openlibrary.isbn.Isbn;
 import com.openlibrary.shared.ApiException;
 import com.openlibrary.shared.AuditService;
 import org.springframework.data.domain.Page;
@@ -129,6 +130,22 @@ public class CatalogService {
     }
 
     // ── internals ────────────────────────────────────────────────────────────
+
+    /**
+     * The book behind an ISBN, if any. The import needs it to tell a new title from
+     * one already on the shelf, otherwise re-uploading the same spreadsheet fills the
+     * catalogue with duplicates.
+     */
+    @Transactional(readOnly = true)
+    public CatalogDtos.BookRef findByIsbn(String raw) {
+        if (raw == null || raw.isBlank()) {
+            return null;
+        }
+        Isbn parsed = Isbn.parse(raw);
+        return books.findByIsbn13(parsed == null ? raw : parsed.normalised())
+                .map(book -> new CatalogDtos.BookRef(book.getId(), book.getTitle()))
+                .orElse(null);
+    }
 
     private void applyIsbn(Book book, String raw, Long selfId) {
         book.setIsbn(raw);

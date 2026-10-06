@@ -325,6 +325,31 @@ class CatalogApiTest extends PostgresTest {
         assertThat(stale).as("the replaced author link is gone").isZero();
     }
 
+    /**
+     * Saving a book you did not change is the most ordinary thing a librarian does:
+     * open it to fix a typo, save, done. It used to fail with a 500 because the
+     * credit links were deleted and re-inserted against a UNIQUE constraint that
+     * Hibernate's flush order trips over. The test above only covered the case where
+     * the authors actually change, which is why this stayed hidden.
+     */
+    @Test
+    void savingTheSameBookTwiceDoesNotBite() {
+        var id = admin.post("/catalog/books", book("Rayuela", "9780306406157",
+                List.of(author("Julio Cortazar")))).text("id");
+
+        var second = admin.put("/catalog/books/" + id, Map.of(
+                "title", "Rayuela",
+                "isbn", "9780306406157",
+                "authors", List.of(author("Julio Cortazar")),
+                "categories", List.of("Novela")));
+
+        assertThat(second.status()).as("body: %s", second.body()).isEqualTo(200);
+        assertThat(second.json().path("authors")).hasSize(1);
+        assertThat(jdbc.queryForObject("select count(*) from book_authors where book_id = ?",
+                Integer.class, Long.valueOf(id)))
+                .as("one credit row, not two").isEqualTo(1);
+    }
+
     @Test
     void deletesABook() {
         var id = admin.post("/catalog/books", book("Temporal", "9780306406157",
